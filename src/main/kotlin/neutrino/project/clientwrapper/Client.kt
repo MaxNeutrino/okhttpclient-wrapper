@@ -18,6 +18,7 @@ class Client {
 
 	constructor(baseUrl: String) {
 		this.baseUrl = baseUrl
+		createCookieManager()
 		this.coreClient = createDefault()
 	}
 
