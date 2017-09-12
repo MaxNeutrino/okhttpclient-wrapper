@@ -1,13 +1,13 @@
-package neutrino.project.clientwrapper
+package neutrino.project.clientwrapper.cookie
 
 import com.google.gson.GsonBuilder
 import java.net.HttpCookie
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
+import neutrino.project.clientwrapper.Client
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
-import java.net.CookieStore
 import java.net.URI
 
 

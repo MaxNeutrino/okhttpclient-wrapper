@@ -1,9 +1,9 @@
 package neutrino.project.clientwrapper
 
+import neutrino.project.clientwrapper.cookie.ClientCookieHandler
 import okhttp3.*
 import java.io.File
-import java.net.CookieManager
-import java.net.CookiePolicy
+import java.net.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -15,6 +15,8 @@ class Client {
 	val coreClient: OkHttpClient
 
 	var cookieManager: CookieManager? = null
+
+	val cookieHandler = ClientCookieHandler(this)
 
 	constructor(baseUrl: String) {
 		this.baseUrl = baseUrl
