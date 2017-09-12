@@ -15,6 +15,18 @@ class ClientCookieHandler(private val client: Client) {
 		addCookie(cookie.name, cookie.value)
 	}
 
+	fun addCookie(cookies: List<HttpCookie>) {
+		val clientCookies = cookies.map {
+			return@map Cookie.Builder()
+					.name(it.name)
+					.value(it.value)
+					.domain(getDomain())
+					.build()
+		}
+
+		addCookieToClient(clientCookies.toMutableList())
+	}
+
 	fun addCookie(name: String, value: String) {
 		val cookie = Cookie.Builder()
 				.name(name)
@@ -26,10 +38,10 @@ class ClientCookieHandler(private val client: Client) {
 	}
 
 	fun addCookie(cookie: Cookie) {
-		addCookie(mutableListOf(cookie))
+		addCookieToClient(mutableListOf(cookie))
 	}
 
-	fun addCookie(cookies: MutableList<Cookie>) {
+	fun addCookieToClient(cookies: MutableList<Cookie>) {
 		client.coreClient
 				.cookieJar()
 				.saveFromResponse(HttpUrl.parse(client.baseUrl), cookies)

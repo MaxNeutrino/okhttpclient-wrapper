@@ -47,7 +47,7 @@ class LoginView(private val loginUrl: String,
 								.build()
 					}.toMutableList()
 
-					client.cookieHandler.addCookie(convertedCookies)*/
+					client.cookieHandler.addCookieToClient(convertedCookies)*/
 					cookies.forEach {
 						val cookie = it.split("=")
 						client.cookieHandler.addCookie(cookie[0], cookie[1])
