@@ -1,6 +1,7 @@
 package neutrino.project.clientwrapper
 
 import neutrino.project.clientwrapper.cookie.ClientCookieHandler
+import neutrino.project.clientwrapper.util.exception.BadRequestException
 import okhttp3.*
 import java.io.File
 import java.net.*
@@ -29,12 +30,24 @@ class Client {
 		this.coreClient = coreClient
 	}
 
-	fun newRequestBuilder(): RequestBuilder {
-		return RequestBuilder(Request.Builder())
+	fun sendGet(url: String): String {
+		return newRequestBuilder()
+				.url(url)
+				.get()
+				.executeAndGetBody()
+				.orElseThrow { BadRequestException() }
 	}
 
-	fun newCustomClientBuilder(clientBaseUrl: String): CustomClientBuilder {
-		return CustomClientBuilder(clientBaseUrl)
+	fun sendPost(url: String, body: Map<String, String>): String {
+		return newRequestBuilder()
+				.url(url)
+				.post(body)
+				.executeAndGetBody()
+				.orElseThrow { BadRequestException() }
+	}
+
+	fun newRequestBuilder(): RequestBuilder {
+		return RequestBuilder(Request.Builder())
 	}
 
 	inner class RequestBuilder(private val requestBuilder: Request.Builder) {
@@ -79,51 +92,6 @@ class Client {
 			response.close()
 
 			return Optional.ofNullable(body)
-		}
-	}
-
-	inner class CustomClientBuilder(private val clientBaseUrl: String) {
-
-		private val clientBuilder = OkHttpClient.Builder()
-
-		fun createSimple(baseUrl: String): Client {
-			val coreClient: OkHttpClient = clientBuilder.build()
-			return Client(baseUrl, coreClient)
-		}
-
-		fun withAutoSaveCookies(): CustomClientBuilder {
-			clientBuilder.cookieJar(JavaNetCookieJar(createCookieManager()))
-			return this
-		}
-
-		fun withCache(dirName: String): CustomClientBuilder {
-			clientBuilder.cache(getCache(dirName))
-			return this
-		}
-
-		fun followRedirects(isFolow: Boolean): CustomClientBuilder {
-			clientBuilder.followRedirects(isFolow)
-			return this
-		}
-
-		fun withTimout(timeout: Long, timeUnit: TimeUnit): CustomClientBuilder {
-			clientBuilder.connectTimeout(timeout, timeUnit)
-					.readTimeout(timeout, timeUnit)
-					.writeTimeout(timeout, timeUnit)
-			return this
-		}
-
-		fun withConnectionPool(pool: ConnectionPool): CustomClientBuilder {
-			clientBuilder.connectionPool(pool)
-			return this
-		}
-
-		fun build(): Client {
-			return Client(clientBaseUrl, clientBuilder.build())
-		}
-
-		fun buildWithCustom(okHttpClient: OkHttpClient): Client {
-			return Client(clientBaseUrl, okHttpClient)
 		}
 	}
 
