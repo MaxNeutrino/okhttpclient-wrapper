@@ -7,12 +7,14 @@ import javafx.stage.Stage
 import neutrino.project.clientwrapper.Client
 import java.net.CookieHandler
 
-
+/**
+ * Init Login view by default with
+ */
 class LoginView(private val loginUrl: String,
 				private val successUrl: String? = null,
 				private val stage: Stage = Stage(),
 				private val client: Client,
-				private val successFunc: (() -> Boolean)? = null) {
+				private val successFunc: ((page: String) -> Boolean)? = null) {
 
 	private val webView = WebView()
 	private val cc: com.sun.webkit.network.CookieManager = com.sun.webkit.network.CookieManager()
@@ -34,7 +36,8 @@ class LoginView(private val loginUrl: String,
 			if (newValue == Worker.State.SUCCEEDED) {
 
 				if (successUrl == null && successFunc != null) {
-					val isSuccess = successFunc.invoke()
+					val page = webView.engine.executeScript("document.body.innerHTML") as String
+					val isSuccess = successFunc.invoke(page)
 					if (isSuccess) {
 						doWithSuccess()
 					}

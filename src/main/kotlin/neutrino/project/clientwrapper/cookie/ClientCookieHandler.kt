@@ -61,6 +61,11 @@ class ClientCookieHandler(private val client: Client) {
 			domain = client.baseUrl
 					.replace("http://", "")
 					.replace("https://", "")
+
+			if (domain!!.contains("/")) {
+				domain = domain!!.substring(0, domain!!.indexOf("/"))
+				println(domain)
+			}
 		}
 
 		return domain
