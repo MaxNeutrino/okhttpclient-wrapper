@@ -5,7 +5,8 @@ import javafx.scene.Scene
 import javafx.scene.web.WebView
 import javafx.stage.Stage
 import neutrino.project.clientwrapper.Client
-import java.net.CookieHandler
+import neutrino.project.clientwrapper.util.cookie.CookieManagerHandler
+import neutrino.project.clientwrapper.util.cookie.impl.NetCookieManagerHandler
 
 /**
  * Init Login view by default with
@@ -14,13 +15,13 @@ class LoginView(private val loginUrl: String,
 				private val successUrl: String? = null,
 				private val stage: Stage = Stage(),
 				private val client: Client,
+				private val cookieManagerHandler: CookieManagerHandler = NetCookieManagerHandler(),
 				private val successFunc: ((page: String) -> Boolean)? = null) {
 
 	private val webView = WebView()
-	private val cc: com.sun.webkit.network.CookieManager = com.sun.webkit.network.CookieManager()
 
 	init {
-		CookieHandler.setDefault(cc)
+		cookieManagerHandler.setWebViewEngine(webView.engine)
 		webView.engine.load(loginUrl)
 		setSuccessListener()
 	}
@@ -52,23 +53,7 @@ class LoginView(private val loginUrl: String,
 	}
 
 	private fun doWithSuccess() {
-		val cookieLine = webView.engine.executeScript("document.cookie") as String
-		val cookies = cookieLine.split("; ")
-
-		/*val convertedCookies = cookies.map {
-        val cookie = it.split("=")
-        return@map Cookie.Builder()
-                .name(cookie[0])
-                .value(cookie[1])
-                .domain(client.baseUrl)
-                .build()
-    }.toMutableList()
-
-    client.cookieHandler.addCookieToClient(convertedCookies)*/
-		cookies.forEach {
-			val cookie = it.split("=")
-			client.cookieHandler.addCookie(cookie[0], cookie[1])
-		}
+		cookieManagerHandler.loadCookieToClient(client)
 		stage.close()
 	}
 }

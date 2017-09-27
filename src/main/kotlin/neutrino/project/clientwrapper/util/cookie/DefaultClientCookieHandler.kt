@@ -1,21 +1,22 @@
-package neutrino.project.clientwrapper.cookie
+package neutrino.project.clientwrapper.util.cookie
 
-import neutrino.project.clientwrapper.Client
+import neutrino.project.clientwrapper.OkHttpClientWrapper
+import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import okhttp3.Cookie
 import okhttp3.HttpUrl
 import java.net.CookieStore
 import java.net.HttpCookie
 
 
-class ClientCookieHandler(private val client: Client) {
+class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : ClientCookieHandler {
 
 	private var domain: String? = null
 
-	fun addCookie(cookie: HttpCookie) {
+	override fun addCookie(cookie: HttpCookie) {
 		addCookie(cookie.name, cookie.value)
 	}
 
-	fun addCookie(cookies: List<HttpCookie>) {
+	override fun addCookie(cookies: List<HttpCookie>) {
 		val clientCookies = cookies.map {
 			return@map Cookie.Builder()
 					.name(it.name)
@@ -27,7 +28,7 @@ class ClientCookieHandler(private val client: Client) {
 		addCookieToClient(clientCookies.toMutableList())
 	}
 
-	fun addCookie(name: String, value: String) {
+	override fun addCookie(name: String, value: String) {
 		val cookie = Cookie.Builder()
 				.name(name)
 				.value(value)
@@ -37,26 +38,26 @@ class ClientCookieHandler(private val client: Client) {
 		addCookie(cookie)
 	}
 
-	fun addCookie(cookie: Cookie) {
+	override fun addCookie(cookie: Cookie) {
 		addCookieToClient(mutableListOf(cookie))
 	}
 
-	fun addCookieToClient(cookies: MutableList<Cookie>) {
+	override fun addCookieToClient(cookies: MutableList<Cookie>) {
 		client.coreClient
 				.cookieJar()
-				.saveFromResponse(HttpUrl.parse(client.baseUrl), cookies)
+				.saveFromResponse(HttpUrl.parse(client.baseUrl)!!, cookies)
 	}
 
-	fun getCookies(): List<HttpCookie> {
+	override fun getCookies(): List<HttpCookie> {
 		return client.cookieManager?.cookieStore?.cookies ?: listOf()
 	}
 
-	fun getCookieStore(): CookieStore? {
+	override fun getCookieStore(): CookieStore? {
 		return client.cookieManager?.cookieStore
 	}
 
 
-	private fun getDomain(): String? {
+	private fun getDomain(): String {
 		if (domain == null) {
 			domain = client.baseUrl
 					.replace("http://", "")
@@ -68,7 +69,7 @@ class ClientCookieHandler(private val client: Client) {
 			}
 		}
 
-		return domain
+		return domain!!
 	}
 
 }

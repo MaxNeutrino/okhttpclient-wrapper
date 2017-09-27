@@ -1,13 +1,13 @@
-package neutrino.project.clientwrapper.cookie
+package neutrino.project.clientwrapper.util.cookie
 
 import com.google.gson.GsonBuilder
-import java.net.HttpCookie
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
-import neutrino.project.clientwrapper.Client
+import neutrino.project.clientwrapper.OkHttpClientWrapper
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
+import java.net.HttpCookie
 import java.net.URI
 
 
@@ -26,12 +26,12 @@ object CookieFileStore {
 		saveCookie(cookies, File(saveFile))
 	}
 
-	fun saveCookie(client: Client, saveFile: File) {
+	fun saveCookie(client: OkHttpClientWrapper, saveFile: File) {
 		val cookies = client.cookieManager?.cookieStore?.cookies
 		saveCookie(cookies, saveFile)
 	}
 
-	fun saveCookie(client: Client, saveFile: String) {
+	fun saveCookie(client: OkHttpClientWrapper, saveFile: String) {
 		val cookies = client.cookieManager?.cookieStore?.cookies
 		saveCookie(cookies, saveFile)
 	}
@@ -50,14 +50,14 @@ object CookieFileStore {
 		return restoreCookie(File(saveFile))
 	}
 
-	fun restoreCookie(client: Client, saveFile: File) {
+	fun restoreCookie(client: OkHttpClientWrapper, saveFile: File) {
 		val store = client.cookieManager?.cookieStore
 		restoreCookie(saveFile)?.forEach { cookie ->
 			store?.add(URI(client.baseUrl), cookie)
 		}
 	}
 
-	fun restoreCookie(client: Client, saveFile: String) {
+	fun restoreCookie(client: OkHttpClientWrapper, saveFile: String) {
 		restoreCookie(client, File(saveFile))
 	}
 }
