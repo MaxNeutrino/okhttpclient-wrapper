@@ -11,12 +11,12 @@ import neutrino.project.clientwrapper.util.cookie.impl.NetCookieManagerHandler
 /**
  * Init Login view by default with
  */
-class LoginView(private val loginUrl: String,
-				private val successUrl: String? = null,
-				private val stage: Stage = Stage(),
-				private val client: Client,
-				private val cookieManagerHandler: CookieManagerHandler = NetCookieManagerHandler(),
-				private val successFunc: ((page: String) -> Boolean)? = null) {
+class LoginWebView(private val loginUrl: String,
+				   private val successUrl: String? = null,
+				   private val stage: Stage = Stage(),
+				   private val client: Client,
+				   private val cookieManagerHandler: CookieManagerHandler = NetCookieManagerHandler(),
+				   private val successFunc: ((page: String) -> Boolean)? = null) {
 
 	private val webView = WebView()
 

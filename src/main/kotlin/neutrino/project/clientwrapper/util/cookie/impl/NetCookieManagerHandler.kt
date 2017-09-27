@@ -8,7 +8,7 @@ import java.net.CookieManager
 import java.net.CookiePolicy
 
 /**
- * It is default implementation for LoginView
+ * It is default implementation for LoginWebView
  * For some websites need use other implementation
  * If your credentials right but cookie wasn't load than use @see WebKitCookieManagerHandler
  */
