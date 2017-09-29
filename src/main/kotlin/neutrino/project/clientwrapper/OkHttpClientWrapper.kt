@@ -9,8 +9,12 @@ import okhttp3.Response
 import java.io.File
 import java.net.CookieManager
 import java.net.CookiePolicy
+import java.security.cert.X509Certificate
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 
 class OkHttpClientWrapper : Client {
@@ -26,7 +30,7 @@ class OkHttpClientWrapper : Client {
 	constructor(baseUrl: String) {
 		this.baseUrl = baseUrl
 		createCookieManager()
-		this.coreClient = createDefault()
+		this.coreClient = createUnsafeDefault()
 	}
 
 	constructor(baseUrl: String, coreClient: OkHttpClient) {
@@ -101,6 +105,7 @@ class OkHttpClientWrapper : Client {
 	inner class OkHttpRequestBuilder(private val requestBuilder: Request.Builder) : RequestBuilder {
 
 		override fun url(url: String): OkHttpRequestBuilder {
+			println("$baseUrl$url")
 			requestBuilder.url("$baseUrl$url")
 			return this
 		}
@@ -152,6 +157,37 @@ class OkHttpClientWrapper : Client {
 				.readTimeout(2, TimeUnit.MINUTES)
 				.writeTimeout(2, TimeUnit.MINUTES)
 				.connectionPool(ConnectionPool(15, 5, TimeUnit.MINUTES))
+				.build()
+	}
+
+	private fun createUnsafeDefault(): OkHttpClient {
+		val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+
+			override fun getAcceptedIssuers(): Array<X509Certificate> {
+				return emptyArray()
+			}
+
+			override fun checkClientTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {
+				//No need to implement.
+			}
+
+			override fun checkServerTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {
+				//No need to implement.
+			}
+		})
+		val sc = SSLContext.getInstance("SSL")
+		sc.init(null, trustAllCerts, java.security.SecureRandom())
+
+		return OkHttpClient.Builder()
+				.cookieJar(JavaNetCookieJar(cookieManager))
+				.cache(getCache("victoria"))
+				.followRedirects(true)
+				.connectTimeout(2, TimeUnit.MINUTES)
+				.readTimeout(2, TimeUnit.MINUTES)
+				.writeTimeout(2, TimeUnit.MINUTES)
+				.connectionPool(ConnectionPool(15, 5, TimeUnit.MINUTES))
+				//FIXME
+				.sslSocketFactory(sc.socketFactory)
 				.build()
 	}
 
