@@ -7,9 +7,9 @@ interface Client {
 
 	fun getClientCookieHandler(): ClientCookieHandler
 
-	fun sendGet(url: String): String
+	fun sendGet(url: String): Response
 
-	fun sendPost(url: String, body: Map<String, String>): String
+	fun sendPost(url: String, body: Map<String, String>): Response
 
 	fun newRequestBuilder(): RequestBuilder
 

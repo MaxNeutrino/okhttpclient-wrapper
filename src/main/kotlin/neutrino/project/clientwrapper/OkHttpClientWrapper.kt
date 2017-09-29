@@ -3,7 +3,9 @@ package neutrino.project.clientwrapper
 import neutrino.project.clientwrapper.util.cookie.DefaultClientCookieHandler
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import neutrino.project.clientwrapper.util.exception.BadRequestException
+import neutrino.project.clientwrapper.util.exception.SessionInterruptedException
 import okhttp3.*
+import okhttp3.Response
 import java.io.File
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -36,24 +38,64 @@ class OkHttpClientWrapper : Client {
 		return cookieHandler
 	}
 
-	override fun sendGet(url: String): String {
-		return newRequestBuilder()
+	override fun sendGet(url: String): neutrino.project.clientwrapper.Response {
+		val okHttpResponse = newRequestBuilder()
 				.url(url)
 				.get()
-				.executeAndGetBody()
+				.execute()
 				.orElseThrow { BadRequestException() }
+
+		return OkHttpResponseWrapper(okHttpResponse)
+
 	}
 
-	override fun sendPost(url: String, body: Map<String, String>): String {
-		return newRequestBuilder()
+	override fun sendPost(url: String, body: Map<String, String>): neutrino.project.clientwrapper.Response {
+		val okHttpResponse = newRequestBuilder()
 				.url(url)
 				.post(body)
-				.executeAndGetBody()
+				.execute()
 				.orElseThrow { BadRequestException() }
+
+		return OkHttpResponseWrapper(okHttpResponse)
 	}
 
 	override fun newRequestBuilder(): RequestBuilder {
 		return OkHttpRequestBuilder(Request.Builder())
+	}
+
+	inner class OkHttpResponseWrapper(private val response: Response) : neutrino.project.clientwrapper.Response {
+
+		private val body: String?
+
+		private val code: Int
+
+		init {
+			code = response.code()
+			body = response.body()?.string()
+			response.close()
+		}
+
+		override fun body(): String? {
+			return body
+		}
+
+		override fun code(): Int {
+			return code
+		}
+
+		override fun isAuthorized(checkData: String): neutrino.project.clientwrapper.Response {
+			return isAuthorized({ body!!.contains(checkData) })
+		}
+
+		override fun isAuthorized(checkFunc: () -> Boolean): neutrino.project.clientwrapper.Response {
+			if (body == null)
+				throw SessionInterruptedException("Is unauthorized")
+
+			return if (checkFunc.invoke())
+				this
+			else
+				throw SessionInterruptedException("Is unauthorized")
+		}
 	}
 
 	inner class OkHttpRequestBuilder(private val requestBuilder: Request.Builder) : RequestBuilder {
