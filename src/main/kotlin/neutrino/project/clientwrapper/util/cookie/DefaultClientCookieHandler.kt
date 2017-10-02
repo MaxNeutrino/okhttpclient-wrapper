@@ -10,8 +10,6 @@ import java.net.HttpCookie
 
 class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : ClientCookieHandler {
 
-	private var domain: String? = null
-
 	override fun addCookie(cookie: HttpCookie) {
 		addCookie(cookie.name, cookie.value)
 	}
@@ -21,7 +19,9 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 			return@map Cookie.Builder()
 					.name(it.name)
 					.value(it.value)
-					.domain(getDomain())
+					.domain(getSafeDomain(it.domain))
+					.expiresAt(it.maxAge)
+					.path(it.path)
 					.build()
 		}
 
@@ -32,7 +32,7 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 		val cookie = Cookie.Builder()
 				.name(name)
 				.value(value)
-				.domain(getDomain())
+				.domain(getSafeDomain(null))
 				.build()
 
 		addCookie(cookie)
@@ -57,19 +57,19 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 	}
 
 
-	private fun getDomain(): String {
-		if (domain == null) {
-			domain = client.baseUrl
+	private fun getSafeDomain(domain: String?): String {
+		return if (domain == null) {
+			var myDomain = client.baseUrl
 					.replace("http://", "")
 					.replace("https://", "")
 
-			if (domain!!.contains("/")) {
-				domain = domain!!.substring(0, domain!!.indexOf("/"))
-				println(domain)
+			if (myDomain.contains("/")) {
+				myDomain = myDomain.substring(0, myDomain.indexOf("/"))
 			}
+			myDomain
+		} else {
+			domain
 		}
-
-		return domain!!
 	}
 
 }

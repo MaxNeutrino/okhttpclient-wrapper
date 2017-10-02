@@ -15,7 +15,11 @@ interface Client {
 
 	companion object {
 		fun createDefault(baseUrl: String): Client {
-			return OkHttpClientWrapper(baseUrl)
+			return OkHttpClientWrapper(baseUrl, false)
+		}
+
+		fun createUnsafe(baseUrl: String): Client {
+			return OkHttpClientWrapper(baseUrl, true)
 		}
 	}
 }

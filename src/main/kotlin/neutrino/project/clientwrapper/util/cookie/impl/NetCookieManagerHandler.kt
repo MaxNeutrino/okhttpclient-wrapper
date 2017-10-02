@@ -14,11 +14,15 @@ import java.net.CookiePolicy
  */
 class NetCookieManagerHandler : CookieManagerHandler {
 
-	private val cookieManager = CookieManager()
+	val cookieManager = CookieManager()
 
 	init {
 		cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+	}
+
+	override fun makeDefault(): CookieHandler {
 		CookieHandler.setDefault(cookieManager)
+		return cookieManager
 	}
 
 	override fun setWebViewEngine(engine: WebEngine) {

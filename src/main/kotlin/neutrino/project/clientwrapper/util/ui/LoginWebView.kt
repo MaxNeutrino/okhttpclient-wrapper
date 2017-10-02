@@ -1,5 +1,6 @@
 package neutrino.project.clientwrapper.util.ui
 
+import javafx.beans.value.ChangeListener
 import javafx.concurrent.Worker
 import javafx.scene.Scene
 import javafx.scene.web.WebView
@@ -8,14 +9,15 @@ import neutrino.project.clientwrapper.Client
 import neutrino.project.clientwrapper.util.cookie.CookieManagerHandler
 import neutrino.project.clientwrapper.util.cookie.impl.NetCookieManagerHandler
 
+
 /**
  * Init Login view by default with
  */
 class LoginWebView(private val loginUrl: String,
 				   private val successUrl: String? = null,
 				   private val stage: Stage = Stage(),
-				   private val client: Client,
-				   private val cookieManagerHandler: CookieManagerHandler = NetCookieManagerHandler(),
+				   private val client: Client?,
+				   val cookieManagerHandler: CookieManagerHandler = NetCookieManagerHandler(),
 				   private val successFunc: ((page: String) -> Boolean)? = null) {
 
 	private val webView = WebView()
@@ -23,6 +25,7 @@ class LoginWebView(private val loginUrl: String,
 	init {
 		cookieManagerHandler.setWebViewEngine(webView.engine)
 		webView.engine.load(loginUrl)
+		setLoadedContentListener()
 		setSuccessListener()
 	}
 
@@ -53,7 +56,24 @@ class LoginWebView(private val loginUrl: String,
 	}
 
 	private fun doWithSuccess() {
-		cookieManagerHandler.loadCookieToClient(client)
+		if (client != null) {
+			cookieManagerHandler.loadCookieToClient(client)
+		}
 		stage.close()
+	}
+
+	private fun setLoadedContentListener() {
+		var isLoaded = false
+		webView.engine.loadWorker.stateProperty().addListener(
+				ChangeListener<Worker.State> { observable, oldValue, newValue ->
+					if (newValue != Worker.State.SUCCEEDED) {
+						return@ChangeListener
+					}
+
+					if (!isLoaded) {
+						cookieManagerHandler.makeDefault()
+						isLoaded = true
+					}
+				})
 	}
 }

@@ -15,8 +15,9 @@ class WebKitCookieManagerHandler : CookieManagerHandler {
 	private val cookieManager = CookieManager()
 	private var webEngine: WebEngine? = null
 
-	init {
+	override fun makeDefault(): CookieHandler {
 		CookieHandler.setDefault(cookieManager)
+		return cookieManager
 	}
 
 	override fun setWebViewEngine(engine: WebEngine) {

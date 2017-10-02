@@ -13,6 +13,7 @@ import java.security.cert.X509Certificate
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
@@ -27,10 +28,10 @@ class OkHttpClientWrapper : Client {
 
 	val cookieHandler = DefaultClientCookieHandler(this)
 
-	constructor(baseUrl: String) {
+	constructor(baseUrl: String, isUnsafe: Boolean) {
 		this.baseUrl = baseUrl
 		createCookieManager()
-		this.coreClient = createUnsafeDefault()
+		this.coreClient = createDefault(isUnsafe)
 	}
 
 	constructor(baseUrl: String, coreClient: OkHttpClient) {
@@ -148,19 +149,23 @@ class OkHttpClientWrapper : Client {
 		}
 	}
 
-	private fun createDefault(): OkHttpClient {
-		return OkHttpClient.Builder()
+	private fun createDefault(isUnsafe: Boolean): OkHttpClient {
+		val clientBuilder = OkHttpClient.Builder()
 				.cookieJar(JavaNetCookieJar(cookieManager))
-				.cache(getCache("victoria"))
+				.cache(getCache(baseUrl))
 				.followRedirects(true)
 				.connectTimeout(2, TimeUnit.MINUTES)
 				.readTimeout(2, TimeUnit.MINUTES)
 				.writeTimeout(2, TimeUnit.MINUTES)
 				.connectionPool(ConnectionPool(15, 5, TimeUnit.MINUTES))
-				.build()
+
+		if (isUnsafe)
+			clientBuilder.sslSocketFactory(createUnsafeSSL())
+
+		return clientBuilder.build()
 	}
 
-	private fun createUnsafeDefault(): OkHttpClient {
+	private fun createUnsafeSSL(): SSLSocketFactory {
 		val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
 
 			override fun getAcceptedIssuers(): Array<X509Certificate> {
@@ -178,17 +183,7 @@ class OkHttpClientWrapper : Client {
 		val sc = SSLContext.getInstance("SSL")
 		sc.init(null, trustAllCerts, java.security.SecureRandom())
 
-		return OkHttpClient.Builder()
-				.cookieJar(JavaNetCookieJar(cookieManager))
-				.cache(getCache("victoria"))
-				.followRedirects(true)
-				.connectTimeout(2, TimeUnit.MINUTES)
-				.readTimeout(2, TimeUnit.MINUTES)
-				.writeTimeout(2, TimeUnit.MINUTES)
-				.connectionPool(ConnectionPool(15, 5, TimeUnit.MINUTES))
-				//FIXME
-				.sslSocketFactory(sc.socketFactory)
-				.build()
+		return sc.socketFactory
 	}
 
 	private fun getCache(child: String): Cache {
