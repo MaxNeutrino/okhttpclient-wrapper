@@ -5,7 +5,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 
-class AuthorizationCheckInterceptor(private val pageCompareFunction: (body: String?) -> Boolean) : Interceptor {
+class AuthorizationCheckInterceptor(private val pageContainsFunction: (body: String?) -> Boolean) : Interceptor {
 
 	override fun intercept(chain: Interceptor.Chain?): Response {
 		if (chain != null) {
@@ -13,7 +13,7 @@ class AuthorizationCheckInterceptor(private val pageCompareFunction: (body: Stri
 			val response = chain.proceed(request)
 			val body = response.body()?.string()
 
-			val isAuth = pageCompareFunction.invoke(body)
+			val isAuth = pageContainsFunction.invoke(body)
 			if (!isAuth)
 				throw AuthException("page haven't expected info")
 
