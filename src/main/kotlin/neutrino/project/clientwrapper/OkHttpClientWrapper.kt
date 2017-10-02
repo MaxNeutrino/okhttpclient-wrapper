@@ -28,10 +28,10 @@ class OkHttpClientWrapper : Client {
 
 	val cookieHandler = DefaultClientCookieHandler(this)
 
-	constructor(baseUrl: String, isUnsafe: Boolean) {
+	constructor(baseUrl: String, isUnsafe: Boolean, interceptors: List<Interceptor> = listOf()) {
 		this.baseUrl = baseUrl
 		createCookieManager()
-		this.coreClient = createDefault(isUnsafe)
+		this.coreClient = createDefault(isUnsafe, interceptors)
 	}
 
 	constructor(baseUrl: String, coreClient: OkHttpClient) {
@@ -41,6 +41,22 @@ class OkHttpClientWrapper : Client {
 
 	override fun getClientCookieHandler(): ClientCookieHandler {
 		return cookieHandler
+	}
+
+	override fun get(url: String): String {
+		return newRequestBuilder()
+				.url(url)
+				.get()
+				.executeAndGetBody()
+				.orElseThrow { BadRequestException() }
+	}
+
+	override fun post(url: String, body: Map<String, String>): String {
+		return newRequestBuilder()
+				.url(url)
+				.post(body)
+				.executeAndGetBody()
+				.orElseThrow { BadRequestException() }
 	}
 
 	override fun sendGet(url: String): neutrino.project.clientwrapper.Response {
@@ -149,7 +165,7 @@ class OkHttpClientWrapper : Client {
 		}
 	}
 
-	private fun createDefault(isUnsafe: Boolean): OkHttpClient {
+	private fun createDefault(isUnsafe: Boolean, interceptors: List<Interceptor>): OkHttpClient {
 		val clientBuilder = OkHttpClient.Builder()
 				.cookieJar(JavaNetCookieJar(cookieManager))
 				.cache(getCache(baseUrl))
@@ -161,6 +177,10 @@ class OkHttpClientWrapper : Client {
 
 		if (isUnsafe)
 			clientBuilder.sslSocketFactory(createUnsafeSSL())
+
+		if (interceptors.isNotEmpty()) {
+			interceptors.forEach { clientBuilder.addInterceptor(it) }
+		}
 
 		return clientBuilder.build()
 	}

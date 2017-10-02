@@ -1,5 +1,5 @@
 package neutrino.project.clientwrapper.util.exception
 
 
-class LoginException(message: String) : Exception(message) {
+class LoginException(message: String) : AuthException(message) {
 }
