@@ -12,7 +12,7 @@ import java.util.*
  */
 class LoginCredentialView {
 
-	fun showAndWait(): Optional<Pair<String, String>>? {
+	fun showAndWait(): Optional<Pair<String, String>> {
 		val dialog = Dialog<Pair<String, String>>()
 		dialog.title = "Login"
 
