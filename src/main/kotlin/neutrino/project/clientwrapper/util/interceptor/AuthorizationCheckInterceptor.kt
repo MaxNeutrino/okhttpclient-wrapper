@@ -3,6 +3,7 @@ package neutrino.project.clientwrapper.util.interceptor
 import neutrino.project.clientwrapper.util.exception.AuthException
 import okhttp3.Interceptor
 import okhttp3.Response
+import okhttp3.ResponseBody
 
 
 class AuthorizationCheckInterceptor(private val pageContainsFunction: (body: String?) -> Boolean) : Interceptor {
@@ -17,7 +18,7 @@ class AuthorizationCheckInterceptor(private val pageContainsFunction: (body: Str
 			if (!isAuth)
 				throw AuthException("page haven't expected info")
 
-			return response
+			return response.newBuilder().body(ResponseBody.create(response.body()!!.contentType(), body)).build()
 		} else {
 			throw AuthException("okhttp chain is null")
 		}
