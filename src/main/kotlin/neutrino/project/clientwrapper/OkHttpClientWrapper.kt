@@ -9,6 +9,7 @@ import okhttp3.Response
 import java.io.File
 import java.net.CookieManager
 import java.net.CookiePolicy
+import java.net.URI
 import java.security.cert.X509Certificate
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -28,15 +29,14 @@ class OkHttpClientWrapper : Client {
 
 	val cookieHandler = DefaultClientCookieHandler(this)
 
-	constructor(baseUrl: String, isUnsafe: Boolean, interceptors: List<Interceptor> = listOf()) {
+	val cookiesFileName: String?
+
+	constructor(baseUrl: String, isUnsafe: Boolean, interceptors: List<Interceptor> = listOf(),
+				cookiesFilePath: String? = null) {
 		this.baseUrl = baseUrl
+		this.cookiesFileName = cookiesFilePath
 		createCookieManager()
 		this.coreClient = createDefault(isUnsafe, interceptors)
-	}
-
-	constructor(baseUrl: String, coreClient: OkHttpClient) {
-		this.baseUrl = baseUrl
-		this.coreClient = coreClient
 	}
 
 	override fun getClientCookieHandler(): ClientCookieHandler {
@@ -215,6 +215,12 @@ class OkHttpClientWrapper : Client {
 
 		val cookieManager = CookieManager()
 		cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+
+		if (cookiesFileName != null) {
+			cookieHandler.restoreCookies(cookiesFileName).forEach {
+				cookieManager.cookieStore.add(URI.create(baseUrl), it)
+			}
+		}
 
 		this.cookieManager = cookieManager
 		return cookieManager

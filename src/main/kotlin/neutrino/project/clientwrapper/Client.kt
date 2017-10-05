@@ -40,6 +40,7 @@ interface Client {
 		private var baseUrl: String? = null
 		private var isUnsafe = false
 		private val interceptors: MutableList<Interceptor> = mutableListOf()
+		private var cookiesFilePath: String? = null
 
 		fun baseUrl(baseUrl: String): Builder {
 			this.baseUrl = baseUrl
@@ -61,8 +62,13 @@ interface Client {
 			return this
 		}
 
+		fun withRestoredCookie(adminPanelName: String): Builder {
+			cookiesFilePath = adminPanelName
+			return this
+		}
+
 		fun build(): Client {
-			return OkHttpClientWrapper(baseUrl!!, isUnsafe, interceptors)
+			return OkHttpClientWrapper(baseUrl!!, isUnsafe, interceptors, cookiesFilePath)
 		}
 	}
 }

@@ -1,14 +1,19 @@
 package neutrino.project.clientwrapper.util.cookie
 
+import com.google.gson.JsonIOException
+import com.google.gson.JsonSyntaxException
 import neutrino.project.clientwrapper.OkHttpClientWrapper
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import okhttp3.Cookie
 import okhttp3.HttpUrl
+import java.io.FileNotFoundException
 import java.net.CookieStore
 import java.net.HttpCookie
 
 
 class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : ClientCookieHandler {
+
+	private val baseFilePath = System.getProperty("user.home") + "/.acc/cookies/"
 
 	override fun addCookie(cookie: HttpCookie) {
 		addCookie(cookie.name, cookie.value)
@@ -56,6 +61,29 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 		return client.cookieManager?.cookieStore
 	}
 
+	override fun saveCookie() {
+		val cookiesPath = client.cookiesFileName
+		if (cookiesPath != null) {
+			CookieFileStore.saveCookie(getCookies(), "$baseFilePath/$cookiesPath.cookie")
+		}
+	}
+
+	override fun restoreCookies(fileName: String): List<HttpCookie> {
+		var cookies = listOf<HttpCookie>()
+
+		try {
+			cookies = CookieFileStore.restoreCookie("$baseFilePath/$fileName.cookie") ?: listOf()
+		} catch (e: Exception) {
+			when (e) {
+				is FileNotFoundException -> e.printStackTrace()
+				is JsonIOException -> e.printStackTrace()
+				is JsonSyntaxException -> e.printStackTrace()
+				else -> throw e
+			}
+		}
+
+		return cookies
+	}
 
 	private fun getSafeDomain(domain: String?): String {
 		return if (domain == null) {

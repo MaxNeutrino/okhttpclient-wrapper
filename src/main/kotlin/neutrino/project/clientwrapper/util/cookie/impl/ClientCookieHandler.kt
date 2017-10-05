@@ -20,4 +20,8 @@ interface ClientCookieHandler {
 	fun getCookies(): List<HttpCookie>
 
 	fun getCookieStore(): CookieStore?
+
+	fun saveCookie()
+
+	fun restoreCookies(fileName: String): List<HttpCookie>
 }
