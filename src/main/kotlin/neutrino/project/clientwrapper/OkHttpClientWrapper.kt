@@ -122,7 +122,6 @@ class OkHttpClientWrapper : Client {
 	inner class OkHttpRequestBuilder(private val requestBuilder: Request.Builder) : RequestBuilder {
 
 		override fun url(url: String): OkHttpRequestBuilder {
-			println("$baseUrl$url")
 			requestBuilder.url("$baseUrl$url")
 			return this
 		}
