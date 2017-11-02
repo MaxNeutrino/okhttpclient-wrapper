@@ -2,6 +2,7 @@ package neutrino.project.clientwrapper.util.cookie
 
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
+import com.result.accountant.api.util.StorageUtil
 import neutrino.project.clientwrapper.OkHttpClientWrapper
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import okhttp3.Cookie
@@ -12,8 +13,6 @@ import java.net.HttpCookie
 
 
 class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : ClientCookieHandler {
-
-	private val baseFilePath = System.getProperty("user.home") + "/.acc/cookies/"
 
 	override fun addCookie(cookie: HttpCookie) {
 		addCookie(cookie.name, cookie.value)
@@ -64,7 +63,8 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 	override fun saveCookie() {
 		val cookiesPath = client.cookiesFileName
 		if (cookiesPath != null) {
-			CookieFileStore.saveCookie(getCookies(), "$baseFilePath/$cookiesPath.cookie")
+			val saveFile = StorageUtil.Directory.COOKIE.fileInFolder("$cookiesPath.cookie")
+			CookieFileStore.saveCookie(getCookies(), saveFile)
 		}
 	}
 
@@ -72,7 +72,8 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 		var cookies = listOf<HttpCookie>()
 
 		try {
-			cookies = CookieFileStore.restoreCookie("$baseFilePath/$fileName.cookie") ?: listOf()
+			val saveFile = StorageUtil.Directory.COOKIE.fileInFolder("$fileName.cookie")
+			cookies = CookieFileStore.restoreCookie(saveFile) ?: listOf()
 		} catch (e: Exception) {
 			when (e) {
 				is FileNotFoundException -> e.printStackTrace()

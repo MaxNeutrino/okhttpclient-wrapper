@@ -38,10 +38,12 @@ object CookieFileStore {
 
 	fun restoreCookie(saveFile: File): List<HttpCookie>? {
 		val cookies: MutableList<HttpCookie> = mutableListOf()
-		JsonReader(FileReader(saveFile)).use { reader ->
-			val gson = GsonBuilder().create()
-			cookies.addAll(
-					gson.fromJson(reader, jsonType))
+		if (saveFile.length() > 0) {
+			JsonReader(FileReader(saveFile)).use { reader ->
+				val gson = GsonBuilder().create()
+				cookies.addAll(
+						gson.fromJson(reader, jsonType))
+			}
 		}
 		return cookies
 	}
