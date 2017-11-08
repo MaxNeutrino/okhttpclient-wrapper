@@ -11,7 +11,7 @@ import neutrino.project.clientwrapper.util.cookie.impl.NetCookieManagerHandler
 
 
 /**
- * Init Login view by default with
+ * Init Login fragment by default with
  */
 class LoginWebView(private val loginUrl: String,
 				   private val successUrl: String? = null,
