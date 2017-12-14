@@ -18,7 +18,8 @@ class LoginWebView(private val loginUrl: String,
 				   private val stage: Stage = Stage(),
 				   private val client: Client?,
 				   val cookieManagerHandler: CookieManagerHandler = NetCookieManagerHandler(),
-				   private val successFunc: ((page: String) -> Boolean)? = null) {
+				   private val successFunc: ((page: String) -> Boolean)? = null,
+				   val adminPanelName: String = "") {
 
 	private val webView = WebView()
 
@@ -30,7 +31,7 @@ class LoginWebView(private val loginUrl: String,
 	}
 
 	fun showAndAuth() {
-		stage.title = "login"
+		stage.title = "login $adminPanelName"
 		stage.scene = Scene(webView)
 		stage.showAndWait()
 	}

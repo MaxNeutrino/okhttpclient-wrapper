@@ -12,6 +12,7 @@ import java.net.CookiePolicy
 import java.net.URI
 import java.security.cert.X509Certificate
 import java.util.*
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
@@ -20,6 +21,8 @@ import javax.net.ssl.X509TrustManager
 
 
 class OkHttpClientWrapper : Client {
+
+	val executors = Executors.newCachedThreadPool()
 
 	val baseUrl: String
 
@@ -123,7 +126,7 @@ class OkHttpClientWrapper : Client {
 		}
 	}
 
-	inner class OkHttpRequestBuilder(private val requestBuilder: Request.Builder) : RequestBuilder {
+	inner class OkHttpRequestBuilder(val requestBuilder: Request.Builder) : RequestBuilder {
 
 		override fun url(url: String): OkHttpRequestBuilder {
 			requestBuilder.url("$baseUrl$url")
@@ -182,6 +185,7 @@ class OkHttpClientWrapper : Client {
 				.readTimeout(2, TimeUnit.MINUTES)
 				.writeTimeout(2, TimeUnit.MINUTES)
 				.connectionPool(ConnectionPool(15, 5, TimeUnit.MINUTES))
+				.dispatcher(Dispatcher(executors))
 
 		if (isUnsafe)
 			clientBuilder.sslSocketFactory(createUnsafeSSL())
