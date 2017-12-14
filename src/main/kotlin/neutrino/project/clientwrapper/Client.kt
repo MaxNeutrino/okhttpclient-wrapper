@@ -8,9 +8,9 @@ interface Client {
 
 	fun getClientCookieHandler(): ClientCookieHandler
 
-	fun get(url: String): String
+	fun get(url: String, headers: Map<String, String> = mapOf()): String
 
-	fun post(url: String, body: Map<String, String>): String
+	fun post(url: String, headers: Map<String, String> = mapOf(), body: Map<String, String>): String
 
 	@Deprecated("use #get instead")
 	fun sendGet(url: String): Response
@@ -19,6 +19,8 @@ interface Client {
 	fun sendPost(url: String, body: Map<String, String>): Response
 
 	fun newRequestBuilder(): RequestBuilder
+
+	fun evictAllConnectionPool()
 
 	companion object {
 		fun createDefault(baseUrl: String): Client {

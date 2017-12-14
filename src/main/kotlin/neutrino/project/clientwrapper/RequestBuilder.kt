@@ -10,6 +10,8 @@ interface RequestBuilder {
 
 	fun addHeader(name: String, value: String): RequestBuilder
 
+	fun addHeaders(headers: Map<String, String>): RequestBuilder
+
 	fun get(): RequestBuilder
 
 	fun post(params: Map<String, String>): RequestBuilder

@@ -39,21 +39,21 @@ class OkHttpClientWrapper : Client {
 		this.coreClient = createDefault(isUnsafe, interceptors)
 	}
 
-	override fun getClientCookieHandler(): ClientCookieHandler {
-		return cookieHandler
-	}
+	override fun getClientCookieHandler(): ClientCookieHandler = cookieHandler
 
-	override fun get(url: String): String {
+	override fun get(url: String, headers: Map<String, String>): String {
 		return newRequestBuilder()
 				.url(url)
+				.addHeaders(headers)
 				.get()
 				.executeAndGetBody()
 				.orElseThrow { BadRequestException() }
 	}
 
-	override fun post(url: String, body: Map<String, String>): String {
+	override fun post(url: String, headers: Map<String, String>, body: Map<String, String>): String {
 		return newRequestBuilder()
 				.url(url)
+				.addHeaders(headers)
 				.post(body)
 				.executeAndGetBody()
 				.orElseThrow { BadRequestException() }
@@ -82,6 +82,10 @@ class OkHttpClientWrapper : Client {
 
 	override fun newRequestBuilder(): RequestBuilder {
 		return OkHttpRequestBuilder(Request.Builder())
+	}
+
+	override fun evictAllConnectionPool() {
+		coreClient.connectionPool().evictAll()
 	}
 
 	inner class OkHttpResponseWrapper(private val response: Response) : neutrino.project.clientwrapper.Response {
@@ -128,6 +132,11 @@ class OkHttpClientWrapper : Client {
 
 		override fun addHeader(name: String, value: String): OkHttpRequestBuilder {
 			requestBuilder.header(name, value)
+			return this
+		}
+
+		override fun addHeaders(headers: Map<String, String>): RequestBuilder {
+			headers.forEach { k, v -> addHeader(k, v) }
 			return this
 		}
 
