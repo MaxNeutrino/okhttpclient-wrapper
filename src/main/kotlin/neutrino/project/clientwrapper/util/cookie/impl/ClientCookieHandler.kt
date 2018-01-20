@@ -1,6 +1,7 @@
 package neutrino.project.clientwrapper.util.cookie.impl
 
 import okhttp3.Cookie
+import java.net.CookieHandler
 import java.net.CookieStore
 import java.net.HttpCookie
 
@@ -20,6 +21,8 @@ interface ClientCookieHandler {
 	fun getCookies(): List<HttpCookie>
 
 	fun getCookieStore(): CookieStore?
+
+	fun getCookieManager(): CookieHandler?
 
 	fun saveCookie()
 

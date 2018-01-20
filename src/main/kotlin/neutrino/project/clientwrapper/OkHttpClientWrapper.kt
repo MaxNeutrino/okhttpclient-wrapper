@@ -1,17 +1,25 @@
 package neutrino.project.clientwrapper
 
+import neutrino.project.clientwrapper.request.builder.RequestBuilder
+import neutrino.project.clientwrapper.processor.response.ResponseProcessor
+import neutrino.project.clientwrapper.processor.request.RequestProcessor
+import neutrino.project.clientwrapper.processor.response.ResponseProcessingInterceptor
+import neutrino.project.clientwrapper.request.builder.MultipartRequestBuilder
+import neutrino.project.clientwrapper.request.builder.SimpleMultipartRequestBuilder
+import neutrino.project.clientwrapper.request.builder.SimpleRequestBuilder
+import neutrino.project.clientwrapper.request.executable.AsyncExecutableRequest
+import neutrino.project.clientwrapper.storage.StorageProvider
 import neutrino.project.clientwrapper.util.cookie.DefaultClientCookieHandler
+import neutrino.project.clientwrapper.util.cookie.JavaNetCookieJar
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import neutrino.project.clientwrapper.util.exception.BadRequestException
-import neutrino.project.clientwrapper.util.exception.SessionInterruptedException
 import okhttp3.*
-import okhttp3.Response
 import java.io.File
 import java.net.CookieManager
 import java.net.CookiePolicy
 import java.net.URI
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
@@ -20,172 +28,173 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 
-class OkHttpClientWrapper : Client {
-
-	val executors = Executors.newCachedThreadPool()
-
-	val baseUrl: String
+class OkHttpClientWrapper(private var baseUrl: String,
+						  isUnsafe: Boolean,
+						  interceptors: List<Interceptor> = listOf(),
+						  requestProcessors: List<RequestProcessor>,
+						  responseProcessors: List<ResponseProcessor>,
+						  val executors: ExecutorService? = Executors.newWorkStealingPool(),
+						  val protocols: List<Protocol>,
+						  val storageProvider: StorageProvider,
+						  val cookiesFileName: String? = null) : Client {
 
 	val coreClient: OkHttpClient
 
 	var cookieManager: CookieManager? = null
 
-	val cookieHandler = DefaultClientCookieHandler(this)
+	private val cookieHandler: ClientCookieHandler
 
-	val cookiesFileName: String?
+	private var userAgent = ""
 
-	constructor(baseUrl: String, isUnsafe: Boolean, interceptors: List<Interceptor> = listOf(),
-				cookiesFilePath: String? = null) {
-		this.baseUrl = baseUrl
-		this.cookiesFileName = cookiesFilePath
+	private val processorStore: ProcessorStore
+
+	private val responseProcessingInterceptor: ResponseProcessingInterceptor
+
+	init {
 		createCookieManager()
+
+		this.processorStore = DefaultProcessorStore(
+				requestProcessors.toMutableList(),
+				responseProcessors.toMutableList()
+		)
+
+		this.responseProcessingInterceptor = ResponseProcessingInterceptor(processorStore)
+
 		this.coreClient = createDefault(isUnsafe, interceptors)
+		cookieHandler = DefaultClientCookieHandler(this, cookieManager, storageProvider, cookiesFileName)
 	}
 
-	override fun getClientCookieHandler(): ClientCookieHandler = cookieHandler
+	override fun changeBaseUrl(url: String) {
+		baseUrl = url
+	}
 
-	override fun get(url: String, headers: Map<String, String>): String {
+	override fun getBaseUrl(): String = baseUrl
+
+	override fun withUserAgent(agent: String): Client {
+		userAgent = agent
+		return this
+	}
+
+	override fun getClientCookieHandler(): ClientCookieHandler {
+		return cookieHandler
+	}
+
+	override fun get(url: String, customUrl: String, body: Map<String, String>?,
+					 header: Map<String, String>?): Response {
 		return newRequestBuilder()
-				.url(url)
-				.addHeaders(headers)
-				.get()
-				.executeAndGetBody()
+				.create(
+						url = url,
+						customUrl = customUrl,
+						body = body,
+						headers = header
+				).get()
+				.presentExecute()
 				.orElseThrow { BadRequestException() }
 	}
 
-	override fun post(url: String, headers: Map<String, String>, body: Map<String, String>): String {
+	override fun post(url: String, customUrl: String, body: Map<String, String>,
+					  header: Map<String, String>?): Response {
 		return newRequestBuilder()
-				.url(url)
-				.addHeaders(headers)
-				.post(body)
-				.executeAndGetBody()
+				.create(
+						url = url,
+						customUrl = customUrl,
+						body = body,
+						headers = header
+				).post()
+				.presentExecute()
 				.orElseThrow { BadRequestException() }
 	}
 
-	override fun sendGet(url: String): neutrino.project.clientwrapper.Response {
-		val okHttpResponse = newRequestBuilder()
-				.url(url)
-				.get()
-				.execute()
+	override fun sendFile(url: String, customUrl: String, body: Map<String, String>?, header: Map<String, String>?,
+						  name: String, file: File): Response {
+		return (newMultiPartRequestBuilder()
+				.create(
+						url = url,
+						customUrl = customUrl,
+						body = body,
+						headers = header
+				) as MultipartRequestBuilder)
+				.withFile(name, file)
+				.post()
+				.presentExecute()
 				.orElseThrow { BadRequestException() }
-
-		return OkHttpResponseWrapper(okHttpResponse)
-
 	}
 
-	override fun sendPost(url: String, body: Map<String, String>): neutrino.project.clientwrapper.Response {
-		val okHttpResponse = newRequestBuilder()
-				.url(url)
-				.post(body)
-				.execute()
-				.orElseThrow { BadRequestException() }
-
-		return OkHttpResponseWrapper(okHttpResponse)
+	override fun asyncGet(url: String, customUrl: String, body: Map<String, String>?,
+						  header: Map<String, String>?): AsyncExecutableRequest {
+		return newRequestBuilder()
+				.create(
+						url = url,
+						customUrl = customUrl,
+						body = body,
+						headers = header
+				).asyncGet()
 	}
+
+	override fun asyncPost(url: String, customUrl: String, body: Map<String, String>,
+						   header: Map<String, String>?): AsyncExecutableRequest {
+		return newRequestBuilder()
+				.create(
+						url = url,
+						customUrl = customUrl,
+						body = body,
+						headers = header
+				).asyncPost()
+	}
+
+	override fun asyncSendFile(url: String, customUrl: String, body: Map<String, String>?, header: Map<String, String>?,
+							   name: String, file: File): AsyncExecutableRequest {
+		return (newMultiPartRequestBuilder()
+				.create(
+						url = url,
+						customUrl = customUrl,
+						body = body,
+						headers = header
+				) as MultipartRequestBuilder)
+				.withFile(name, file)
+				.asyncPost()
+	}
+
+	override fun getProcessorStore(): ProcessorStore = processorStore
 
 	override fun newRequestBuilder(): RequestBuilder {
-		return OkHttpRequestBuilder(Request.Builder())
+		return SimpleRequestBuilder(
+				client = this,
+				baseUrl = baseUrl,
+				processorStore = processorStore,
+				userAgent = userAgent
+		)
 	}
 
-	override fun evictAllConnectionPool() {
-		coreClient.connectionPool().evictAll()
+	override fun newMultiPartRequestBuilder(): MultipartRequestBuilder {
+		return SimpleMultipartRequestBuilder(this, baseUrl,
+				processorStore, userAgent)
 	}
 
-	inner class OkHttpResponseWrapper(private val response: Response) : neutrino.project.clientwrapper.Response {
-
-		private val body: String?
-
-		private val code: Int
-
-		init {
-			code = response.code()
-			body = response.body()?.string()
-			response.close()
-		}
-
-		override fun body(): String? {
-			return body
-		}
-
-		override fun code(): Int {
-			return code
-		}
-
-		override fun isAuthorized(checkData: String): neutrino.project.clientwrapper.Response {
-			return isAuthorized({ body!!.contains(checkData) })
-		}
-
-		override fun isAuthorized(checkFunc: () -> Boolean): neutrino.project.clientwrapper.Response {
-			if (body == null)
-				throw SessionInterruptedException("Is unauthorized")
-
-			return if (checkFunc.invoke())
-				this
-			else
-				throw SessionInterruptedException("Is unauthorized")
-		}
+	override fun coreClient(): OkHttpClient {
+		return coreClient
 	}
 
-	inner class OkHttpRequestBuilder(val requestBuilder: Request.Builder) : RequestBuilder {
-
-		override fun url(url: String): OkHttpRequestBuilder {
-			requestBuilder.url("$baseUrl$url")
-			return this
-		}
-
-		override fun addHeader(name: String, value: String): OkHttpRequestBuilder {
-			requestBuilder.header(name, value)
-			return this
-		}
-
-		override fun addHeaders(headers: Map<String, String>): RequestBuilder {
-			headers.forEach { k, v -> addHeader(k, v) }
-			return this
-		}
-
-		override fun get(): OkHttpRequestBuilder {
-			requestBuilder.get()
-			return this
-		}
-
-		override fun post(params: Map<String, String>): OkHttpRequestBuilder {
-			val requestBodyBuilder = FormBody.Builder()
-			params.forEach { requestBodyBuilder.add(it.key, it.value) }
-			val requestBody = requestBodyBuilder.build()
-
-			requestBuilder.post(requestBody)
-			return this
-		}
-
-		override fun execute(): Optional<Response> {
-			val request: Request? = requestBuilder.build()
-			val response = coreClient
-					.newCall(request)
-					.execute()
-
-			return Optional.ofNullable(response)
-		}
-
-		override fun executeAndGetBody(): Optional<String> {
-			val request: Request? = requestBuilder.build()
-			val response = coreClient.newCall(request).execute()
-			val body = response.body()?.string()
-			response.close()
-
-			return Optional.ofNullable(body)
-		}
+	override fun getUserAgent(): String? {
+		return userAgent
 	}
 
 	private fun createDefault(isUnsafe: Boolean, interceptors: List<Interceptor>): OkHttpClient {
 		val clientBuilder = OkHttpClient.Builder()
-				.cookieJar(JavaNetCookieJar(cookieManager))
 				.cache(getCache(baseUrl))
 				.followRedirects(true)
 				.connectTimeout(2, TimeUnit.MINUTES)
 				.readTimeout(2, TimeUnit.MINUTES)
 				.writeTimeout(2, TimeUnit.MINUTES)
 				.connectionPool(ConnectionPool(15, 5, TimeUnit.MINUTES))
-				.dispatcher(Dispatcher(executors))
+				.addInterceptor(responseProcessingInterceptor)
+				.protocols(protocols)
+
+		if (cookieManager != null)
+			clientBuilder.cookieJar(JavaNetCookieJar(cookieManager!!))
+
+		if (executors != null)
+			clientBuilder.dispatcher(Dispatcher(executors))
 
 		if (isUnsafe)
 			clientBuilder.sslSocketFactory(createUnsafeSSL())

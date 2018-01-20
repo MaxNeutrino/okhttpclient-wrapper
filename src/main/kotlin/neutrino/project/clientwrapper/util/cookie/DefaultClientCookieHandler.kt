@@ -2,17 +2,21 @@ package neutrino.project.clientwrapper.util.cookie
 
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
-import neutrino.project.clientwrapper.OkHttpClientWrapper
+import neutrino.project.clientwrapper.storage.StorageProvider
+import neutrino.project.clientwrapper.Client
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import okhttp3.Cookie
 import okhttp3.HttpUrl
 import java.io.File
 import java.io.FileNotFoundException
+import java.net.CookieHandler
+import java.net.CookieManager
 import java.net.CookieStore
 import java.net.HttpCookie
 
 
-class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : ClientCookieHandler {
+class DefaultClientCookieHandler(private val client: Client, private val cookieManager: CookieManager?,
+								 private val storageProvider: StorageProvider, private val cookiesFileName: String? = null) : ClientCookieHandler {
 
 	override fun addCookie(cookie: HttpCookie) {
 		addCookie(cookie.name, cookie.value)
@@ -47,24 +51,24 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 	}
 
 	override fun addCookieToClient(cookies: MutableList<Cookie>) {
-		client.coreClient
+		client.coreClient()
 				.cookieJar()
-				.saveFromResponse(HttpUrl.parse(client.baseUrl)!!, cookies)
+				.saveFromResponse(HttpUrl.parse(client.getBaseUrl())!!, cookies)
 	}
 
 	override fun getCookies(): List<HttpCookie> {
-		return client.cookieManager?.cookieStore?.cookies ?: listOf()
+		return cookieManager?.cookieStore?.cookies ?: listOf()
 	}
 
 	override fun getCookieStore(): CookieStore? {
-		return client.cookieManager?.cookieStore
+		return cookieManager?.cookieStore
 	}
 
 	override fun saveCookie() {
-		val cookiesPath = client.cookiesFileName
-		if (cookiesPath != null) {
-			val saveFile = StorageUtil.Directory.COOKIE.fileInFolder("$cookiesPath.cookie")
-			CookieFileStore.saveCookie(getCookies(), saveFile)
+		if (cookiesFileName != null) {
+			val saveFile = File(storageProvider.cookieDir, "$cookiesFileName.cookie")
+			val cookies: List<HttpCookie> = getCookies()
+			CookieFileStore.saveCookie(cookies, saveFile)
 		}
 	}
 
@@ -72,7 +76,7 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 		var cookies = listOf<HttpCookie>()
 
 		try {
-			val saveFile = StorageUtil.Directory.COOKIE.fileInFolder("$fileName.cookie")
+			val saveFile = File(storageProvider.cookieDir, "$fileName.cookie")
 			cookies = CookieFileStore.restoreCookie(saveFile) ?: listOf()
 		} catch (e: Exception) {
 			when (e) {
@@ -86,9 +90,13 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 		return cookies
 	}
 
+	override fun getCookieManager(): CookieHandler? {
+		return cookieManager
+	}
+
 	private fun getSafeDomain(domain: String?): String {
 		return if (domain == null) {
-			var myDomain = client.baseUrl
+			var myDomain = client.getBaseUrl()
 					.replace("http://", "")
 					.replace("https://", "")
 
@@ -100,50 +108,4 @@ class DefaultClientCookieHandler(private val client: OkHttpClientWrapper) : Clie
 			domain
 		}
 	}
-
-	object StorageUtil {
-
-		init {
-			mkdirIfNotExist(Directory.BASE)
-			mkdirIfNotExist(Directory.ADMIN_PANEL)
-			mkdirIfNotExist(Directory.COOKIE)
-		}
-
-		fun getFilesFromDir(dir: Directory): Array<out File>? {
-			val path = dir.path
-			val folder = File(path)
-			return folder.listFiles()
-		}
-
-		private fun mkdirIfNotExist(dir: Directory) {
-			val file = File(dir.path)
-			if (!file.exists())
-				file.mkdirs()
-		}
-
-		enum class Directory(val path: String) {
-
-			BASE(System.getProperty("user.home") + "/.accountant2/"),
-			ADMIN_PANEL("${BASE.path}/panel/"),
-			COOKIE("${BASE.path}/cookies/");
-
-			fun folderAsFile(): File {
-				return File(path)
-						.also {
-							if (!it.exists())
-								it.mkdirs()
-						}
-			}
-
-			fun fileInFolder(name: String): File {
-				return File("$path/$name")
-						.also {
-							folderAsFile()
-							if (!it.exists())
-								it.createNewFile()
-						}
-			}
-		}
-	}
-
 }
