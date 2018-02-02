@@ -9,11 +9,10 @@ import neutrino.project.clientwrapper.processor.response.ResponseProcessor
 import neutrino.project.clientwrapper.storage.DefaultStorageProvider
 import neutrino.project.clientwrapper.storage.StorageProvider
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.Response
+import okhttp3.*
 import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 
 interface Client {
@@ -81,7 +80,10 @@ interface Client {
 				   responseProcessors: List<ResponseProcessor> = listOf(),
 				   storageProvider: StorageProvider = DefaultStorageProvider(),
 				   protocols: List<Protocol> = listOf(Protocol.HTTP_1_1),  // set HTTP_2 with JAVA 9
-				   cookiesFilePath: String? = null): Client {
+				   cookiesFilePath: String? = null,
+				   cookieJar: CookieJar? = null,
+				   executorService: ExecutorService = Executors.newWorkStealingPool(),
+				   connectionPool: ConnectionPool? = null): Client {
 
 			return OkHttpClientWrapper(
 					baseUrl = baseUrl,
@@ -91,7 +93,10 @@ interface Client {
 					responseProcessors = responseProcessors,
 					cookiesFileName = cookiesFilePath,
 					protocols = protocols,
-					storageProvider = storageProvider
+					storageProvider = storageProvider,
+					executors = executorService,
+					cookieJar = cookieJar,
+					connectionPool = connectionPool
 			)
 		}
 	}

@@ -36,9 +36,11 @@ class OkHttpClientWrapper(private var baseUrl: String,
 						  val executors: ExecutorService? = Executors.newWorkStealingPool(),
 						  val protocols: List<Protocol>,
 						  val storageProvider: StorageProvider,
-						  val cookiesFileName: String? = null) : Client {
+						  val cookiesFileName: String? = null,
+						  val cookieJar: CookieJar? = null,
+						  val connectionPool: ConnectionPool? = null) : Client {
 
-	val coreClient: OkHttpClient
+	private val coreClient: OkHttpClient
 
 	var cookieManager: CookieManager? = null
 
@@ -190,41 +192,52 @@ class OkHttpClientWrapper(private var baseUrl: String,
 				.addInterceptor(responseProcessingInterceptor)
 				.protocols(protocols)
 
-		if (cookieManager != null)
-			clientBuilder.cookieJar(JavaNetCookieJar(cookieManager!!))
+		if (cookieJar == null) {
+			if (cookieManager != null)
+				clientBuilder.cookieJar(JavaNetCookieJar(cookieManager!!))
+		} else {
+			clientBuilder.cookieJar(cookieJar)
+		}
 
 		if (executors != null)
 			clientBuilder.dispatcher(Dispatcher(executors))
 
-		if (isUnsafe)
-			clientBuilder.sslSocketFactory(createUnsafeSSL())
+		if (isUnsafe) {
+			val trustManager = createTrustManager()
+			clientBuilder.sslSocketFactory(createUnsafeSSL(trustManager), trustManager)
+		}
 
 		if (interceptors.isNotEmpty()) {
 			interceptors.forEach { clientBuilder.addInterceptor(it) }
 		}
 
+		if (connectionPool != null)
+			clientBuilder.connectionPool(connectionPool)
+
 		return clientBuilder.build()
 	}
 
-	private fun createUnsafeSSL(): SSLSocketFactory {
-		val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-
-			override fun getAcceptedIssuers(): Array<X509Certificate> {
-				return emptyArray()
-			}
-
-			override fun checkClientTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {
-				//No need to implement.
-			}
-
-			override fun checkServerTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {
-				//No need to implement.
-			}
-		})
+	private fun createUnsafeSSL(trustManager: TrustManager): SSLSocketFactory {
+		val trustAllCerts = arrayOf(trustManager)
 		val sc = SSLContext.getInstance("SSL")
 		sc.init(null, trustAllCerts, java.security.SecureRandom())
 
 		return sc.socketFactory
+	}
+
+	private fun createTrustManager() = object : X509TrustManager {
+
+		override fun getAcceptedIssuers(): Array<X509Certificate> {
+			return emptyArray()
+		}
+
+		override fun checkClientTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {
+			//No need to implement.
+		}
+
+		override fun checkServerTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {
+			//No need to implement.
+		}
 	}
 
 	private fun getCache(child: String): Cache {
