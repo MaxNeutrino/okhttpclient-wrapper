@@ -44,7 +44,7 @@ class OkHttpClientWrapper(private var baseUrl: String,
 
 	var cookieManager: CookieManager? = null
 
-	private val cookieHandler: ClientCookieHandler
+	private lateinit var cookieHandler: ClientCookieHandler
 
 	private var userAgent = ""
 
@@ -53,8 +53,6 @@ class OkHttpClientWrapper(private var baseUrl: String,
 	private val responseProcessingInterceptor: ResponseProcessingInterceptor
 
 	init {
-		createCookieManager()
-
 		this.processorStore = DefaultProcessorStore(
 				requestProcessors.toMutableList(),
 				responseProcessors.toMutableList()
@@ -62,8 +60,8 @@ class OkHttpClientWrapper(private var baseUrl: String,
 
 		this.responseProcessingInterceptor = ResponseProcessingInterceptor(processorStore)
 
+		createCookieManager()
 		this.coreClient = createDefault(isUnsafe, interceptors)
-		cookieHandler = DefaultClientCookieHandler(this, cookieManager, storageProvider, cookiesFileName)
 	}
 
 	override fun changeBaseUrl(url: String) {
@@ -249,6 +247,10 @@ class OkHttpClientWrapper(private var baseUrl: String,
 
 		val cookieManager = CookieManager()
 		cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+
+		if (!(this::cookieHandler.isInitialized))
+			cookieHandler = DefaultClientCookieHandler(this, cookieManager, storageProvider, cookiesFileName)
+
 
 		if (cookiesFileName != null) {
 			cookieHandler.restoreCookies(cookiesFileName).forEach {
