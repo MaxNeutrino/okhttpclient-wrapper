@@ -30,3 +30,8 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+jar {
+    baseName = "okhttpclient-wrapper"
+    version = "1.0-3a"
+}

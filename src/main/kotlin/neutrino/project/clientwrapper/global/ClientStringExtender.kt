@@ -1,5 +1,6 @@
 package neutrino.project.clientwrapper.global
 
+import neutrino.project.clientwrapper.request.executable.AsyncExecutable
 import neutrino.project.clientwrapper.request.executable.AsyncExecutableRequest
 import okhttp3.Response
 import java.io.File
@@ -56,7 +57,7 @@ fun String.sendFile(body: Map<String, String> = mapOf(), header: Map<String, Str
     )
 }
 
-fun String.asyncSendGet(body: Map<String, String> = mapOf(), header: Map<String, String> = mapOf()): AsyncExecutableRequest {
+fun String.asyncSendGet(body: Map<String, String> = mapOf(), header: Map<String, String> = mapOf()): AsyncExecutable<Response?> {
     return GlobalClient.asyncGet(
             url = this,
             body = body,
@@ -64,7 +65,7 @@ fun String.asyncSendGet(body: Map<String, String> = mapOf(), header: Map<String,
     )
 }
 
-fun String.aasyncSendPost(body: Map<String, String>, header: Map<String, String> = mapOf()): AsyncExecutableRequest {
+fun String.aasyncSendPost(body: Map<String, String>, header: Map<String, String> = mapOf()): AsyncExecutable<Response?> {
     return GlobalClient.asyncPost(
             url = this,
             body = body,
@@ -72,7 +73,7 @@ fun String.aasyncSendPost(body: Map<String, String>, header: Map<String, String>
     )
 }
 
-fun String.asyncSendFile(body: Map<String, String> = mapOf(), header: Map<String, String> = mapOf(), name: String = "file", file: File): AsyncExecutableRequest {
+fun String.asyncSendFile(body: Map<String, String> = mapOf(), header: Map<String, String> = mapOf(), name: String = "file", file: File): AsyncExecutable<Response?> {
     return GlobalClient.asyncSendFile(
             url = this,
             body = body,
