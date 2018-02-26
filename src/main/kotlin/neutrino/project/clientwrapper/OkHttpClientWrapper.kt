@@ -7,6 +7,7 @@ import neutrino.project.clientwrapper.processor.response.ResponseProcessingInter
 import neutrino.project.clientwrapper.request.builder.MultipartRequestBuilder
 import neutrino.project.clientwrapper.request.builder.SimpleMultipartRequestBuilder
 import neutrino.project.clientwrapper.request.builder.SimpleRequestBuilder
+import neutrino.project.clientwrapper.request.executable.AsyncExecutable
 import neutrino.project.clientwrapper.request.executable.AsyncExecutableRequest
 import neutrino.project.clientwrapper.storage.StorageProvider
 import neutrino.project.clientwrapper.util.cookie.DefaultClientCookieHandler

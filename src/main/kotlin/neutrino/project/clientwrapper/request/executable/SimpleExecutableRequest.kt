@@ -8,7 +8,7 @@ import java.util.*
 
 class SimpleExecutableRequest(private val requestBuilder: AbstractRequestBuilder) : ExecutableRequest {
 
-	private var request: Request? = null
+	private var request: Request? = requestBuilder.build()
 
 	override fun presentExecute(): Optional<Response> {
 		return execute().let {
@@ -17,15 +17,6 @@ class SimpleExecutableRequest(private val requestBuilder: AbstractRequestBuilder
 	}
 
 	override fun execute(): Response? {
-		val userAgent = requestBuilder.client.getUserAgent()
-		if (userAgent != null && userAgent.isNotEmpty())
-			requestBuilder.builder.header("User-Agent", userAgent)
-
-		requestBuilder.processorStore.getRequestProcessors()
-				.forEach { it.process(requestBuilder.client, requestBuilder.builder) }
-
-		request = requestBuilder.builder.build() ?: return null
-
 		return requestBuilder
 				.client
 				.coreClient()

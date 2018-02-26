@@ -5,6 +5,7 @@ import neutrino.project.clientwrapper.request.builder.MultipartRequestBuilder
 import neutrino.project.clientwrapper.request.builder.RequestBuilder
 import neutrino.project.clientwrapper.request.executable.AsyncExecutableRequest
 import neutrino.project.clientwrapper.Client
+import neutrino.project.clientwrapper.request.executable.AsyncExecutable
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -46,18 +47,18 @@ object GlobalClient : Client {
 	}
 
 	override fun asyncGet(url: String, customUrl: String, body: Map<String, String>?,
-						  header: Map<String, String>?): AsyncExecutableRequest {
+						  header: Map<String, String>?): AsyncExecutable<Response?> {
 		return client?.asyncGet(url, customUrl, body, header) ?: throw IllegalStateException("Not set client as global")
 	}
 
 	override fun asyncPost(url: String, customUrl: String, body: Map<String, String>,
-						   header: Map<String, String>?): AsyncExecutableRequest {
+						   header: Map<String, String>?): AsyncExecutable<Response?> {
 		return client?.asyncPost(url, customUrl, body, header) ?: throw IllegalStateException(
 				"Not set client as global")
 	}
 
 	override fun asyncSendFile(url: String, customUrl: String, body: Map<String, String>?, header: Map<String, String>?,
-							   name: String, file: File): AsyncExecutableRequest {
+							   name: String, file: File): AsyncExecutable<Response?> {
 		return client?.asyncSendFile(url, customUrl, body, header, name, file) ?: throw IllegalStateException(
 				"Not set client as global")
 	}

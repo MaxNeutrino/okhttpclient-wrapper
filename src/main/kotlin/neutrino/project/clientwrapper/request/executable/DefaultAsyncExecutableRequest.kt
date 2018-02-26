@@ -10,20 +10,9 @@ import java.io.IOException
 
 class DefaultAsyncExecutableRequest(private val requestBuilder: AbstractRequestBuilder) : AsyncExecutableRequest {
 
-	private var request: Request?
+	private var request: Request? = requestBuilder.build()
 
-	init {
-		val userAgent = requestBuilder.client.getUserAgent()
-		if (userAgent != null)
-			requestBuilder.builder.header("User-Agent", userAgent)
-
-		requestBuilder.processorStore.getRequestProcessors()
-				.forEach { it.process(requestBuilder.client, requestBuilder.builder) }
-
-		request = requestBuilder.builder.build() ?: null
-	}
-
-	override fun withCallback(success: (call: Call?, response: Response) -> Unit,
+	override fun withCallback(success: (call: Call?, response: Response?) -> Unit,
 							  failure: (call: Call?, e: Exception?) -> Unit) {
 		if (request != null) {
 			requestBuilder.client.coreClient()
@@ -41,12 +30,14 @@ class DefaultAsyncExecutableRequest(private val requestBuilder: AbstractRequestB
 							} else {
 								onFailure(call, IOException("Unexpected code " + response))
 							}
+
+							response.close()
 						}
 					})
 		}
 	}
 
-	override fun withResponse(success: (response: Response) -> Unit,
+	override fun withResponse(success: (response: Response?) -> Unit,
 							  failure: (e: Exception?) -> Unit) {
 		if (request != null) {
 			requestBuilder.client.coreClient()
@@ -64,6 +55,8 @@ class DefaultAsyncExecutableRequest(private val requestBuilder: AbstractRequestB
 							} else {
 								onFailure(call, IOException("Unexpected code " + response))
 							}
+
+							response.close()
 						}
 					})
 		}

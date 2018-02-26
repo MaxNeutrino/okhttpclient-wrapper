@@ -11,4 +11,15 @@ abstract class AbstractRequestBuilder(
         val userAgent: String? = null) : RequestBuilder {
 
     abstract val builder: Request.Builder
+
+    fun build(): Request? {
+        val userAgent = client.getUserAgent()
+        if (userAgent != null)
+            builder.header("User-Agent", userAgent)
+
+        processorStore.getRequestProcessors()
+                .forEach { it.process(client, builder) }
+
+        return builder.build() ?: null
+    }
 }
