@@ -31,6 +31,6 @@ class NetCookieManagerHandler : CookieManagerHandler {
 
 	override fun loadCookieToClient(client: Client) {
 		val cookies = cookieManager.cookieStore.cookies
-		client.getClientCookieHandler().addCookie(cookies)
+		client.getClientCookieHandler()?.addCookie(cookies)
 	}
 }

@@ -27,12 +27,12 @@ object CookieFileStore {
 	}
 
 	fun saveCookie(client: Client, saveFile: File) {
-		val cookies = client.getClientCookieHandler().getCookieStore()?.cookies
+		val cookies = client.getClientCookieHandler()?.getCookieStore()?.cookies
 		saveCookie(cookies, saveFile)
 	}
 
 	fun saveCookie(client: Client, saveFile: String) {
-		val cookies = client.getClientCookieHandler().getCookieStore()?.cookies
+		val cookies = client.getClientCookieHandler()?.getCookieStore()?.cookies
 		saveCookie(cookies, saveFile)
 	}
 
@@ -53,7 +53,7 @@ object CookieFileStore {
 	}
 
 	fun restoreCookie(client: Client, saveFile: File) {
-		val store = client.getClientCookieHandler().getCookieStore()
+		val store = client.getClientCookieHandler()?.getCookieStore()
 		restoreCookie(saveFile)?.forEach { cookie ->
 			store?.add(URI(client.getBaseUrl()), cookie)
 		}
