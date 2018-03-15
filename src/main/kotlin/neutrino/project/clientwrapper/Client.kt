@@ -5,6 +5,7 @@ import neutrino.project.clientwrapper.storage.DefaultStorageProvider
 import neutrino.project.clientwrapper.storage.StorageProvider
 import neutrino.project.clientwrapper.util.BuildUtil
 import neutrino.project.clientwrapper.util.cookie.JavaNetCookieJar
+import neutrino.project.clientwrapper.util.cookie.StorageSaverJavaNetCookieJar
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import okhttp3.Call
 import okhttp3.ConnectionPool
@@ -74,7 +75,7 @@ interface Client {
 		}
 
 		fun create(baseUrl: String,
-				   okHttpClient: OkHttpClient,
+				   clientBuilder: OkHttpClient.Builder,
 				   processorStore: ProcessorStore,
 				   isAutoSaveCookies: Boolean,
 				   storageProvider: StorageProvider = DefaultStorageProvider()): Client {
@@ -89,9 +90,12 @@ interface Client {
 				"tmp.cookies"
 			} else null
 
+			if (cookieManager != null)
+				clientBuilder.cookieJar(StorageSaverJavaNetCookieJar(cookieManager, File(storageProvider.cookieDir, cookiesFileName)))
+
 			return create(
 					baseUrl = baseUrl,
-					okHttpClient = okHttpClient,
+					okHttpClient = clientBuilder.build(),
 					processorStore = processorStore,
 					cookieManager = cookieManager,
 					cookiesFileName = cookiesFileName
