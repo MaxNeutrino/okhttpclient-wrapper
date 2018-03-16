@@ -1,7 +1,5 @@
 package neutrino.project.clientwrapper.util.cookie
 
-import com.google.gson.JsonIOException
-import com.google.gson.JsonSyntaxException
 import neutrino.project.clientwrapper.Client
 import neutrino.project.clientwrapper.storage.StorageProvider
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
@@ -9,6 +7,7 @@ import okhttp3.Cookie
 import okhttp3.HttpUrl
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.CookieStore
@@ -81,8 +80,7 @@ class DefaultClientCookieHandler(private val client: Client, private val cookieM
 		} catch (e: Exception) {
 			when (e) {
 				is FileNotFoundException -> e.printStackTrace()
-				is JsonIOException -> e.printStackTrace()
-				is JsonSyntaxException -> e.printStackTrace()
+				is IOException -> e.printStackTrace()
 				else -> throw e
 			}
 		}
