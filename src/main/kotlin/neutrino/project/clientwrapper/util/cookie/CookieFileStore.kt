@@ -1,6 +1,5 @@
 package neutrino.project.clientwrapper.util.cookie
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JSON
 import neutrino.project.clientwrapper.Client
 import java.io.*
@@ -61,25 +60,5 @@ object CookieFileStore {
 
 	fun restoreCookie(client: Client, saveFile: String) {
 		restoreCookie(client, File(saveFile))
-	}
-
-	@Serializable
-	data class CookieTo(val name: String, val value: String, val domain: String) {
-
-		fun toHttpCookie(): HttpCookie {
-			val cookie = HttpCookie(name, value)
-			cookie.domain = domain
-			return cookie
-		}
-
-		companion object {
-			fun of(cookie: HttpCookie): CookieTo {
-				return CookieTo(
-						cookie.name,
-						cookie.value,
-						cookie.domain
-				)
-			}
-		}
 	}
 }

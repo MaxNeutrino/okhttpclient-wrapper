@@ -1,5 +1,6 @@
 package neutrino.project.clientwrapper.util
 
+import okhttp3.Call
 import okhttp3.Response
 import okhttp3.ResponseBody
 
@@ -25,3 +26,15 @@ fun <T> Response.letBody(block: (body: ResponseBody?) -> T): T {
 fun <T> Response.letStringBody(block: (body: String?) -> T): T {
 	return block.invoke(this.stringBody())
 }
+
+fun Call.blockStringBody(): String? = this.execute().stringBody()
+
+fun <T> Call.letStringBody(block: (body: String?) -> T): T = this.execute().letStringBody(block)
+
+fun <T> Call.letBody(block: (body: ResponseBody?) -> T): T = this.execute().letBody(block)
+
+fun <T> Call.blockAndClose(block: (response: Response) -> T): T = this.execute().closeAfter(block)
+
+fun Call.applyBody(block: (body: ResponseBody?) -> Unit) = this.execute().applyBody(block)
+
+fun Call.applyStringBody(block: (body: String?) -> Unit) = this.execute().applyStringBody(block)
