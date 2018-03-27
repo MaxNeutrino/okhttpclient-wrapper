@@ -1,6 +1,5 @@
 package neutrino.project.clientwrapper.util.cookie
 
-import kotlinx.serialization.json.JSON
 import okhttp3.Cookie
 import okhttp3.HttpUrl
 import okhttp3.internal.platform.Platform
@@ -17,25 +16,29 @@ class StorageSaverJavaNetCookieJar(cookieHandler: CookieHandler,
 		super.saveFromResponse(url, cookies)
 
 		try {
-			FileWriter(saveFile).use {
+			val fos = FileOutputStream(saveFile)
+			ObjectOutputStream(fos).use {
 				val to = cookies.map { CookieTo.of(it) }
-				val data = JSON.stringify(to)
-				it.write(data)
+				it.writeObject(to)
 				it.flush()
 			}
+			fos.close()
 
 		} catch (e: IOException) {
 			Platform.get().log(Platform.WARN, "Loading cookies failed for " + url.resolve("/...")!!, e)
 		}
 	}
 
+	@Suppress("UNCHECKED_CAST")
 	override fun loadForRequest(url: HttpUrl): List<Cookie> {
 		if (!isRestored) {
 			try {
-				BufferedReader(FileReader(saveFile)).use {
-					val data = it.readText()
-					val to = JSON.parse<List<CookieTo>>(data)
-					return@use to.map { it.toHttpCookie() }
+				FileInputStream(saveFile).use {
+					ObjectInputStream(it).use {
+						val to = it.readObject() as List<CookieTo>
+
+						to.map { it.toHttpCookie() }
+					}
 				}.map {
 					Cookie.Builder()
 							.name(it.name)

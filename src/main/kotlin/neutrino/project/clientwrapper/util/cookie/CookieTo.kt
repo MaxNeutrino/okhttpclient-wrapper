@@ -1,12 +1,10 @@
 package neutrino.project.clientwrapper.util.cookie
 
-import kotlinx.serialization.Serializable
 import okhttp3.Cookie
+import java.io.Serializable
 import java.net.HttpCookie
 
-
-@Serializable
-data class CookieTo(val name: String, val value: String, val domain: String) {
+data class CookieTo(val name: String, val value: String, val domain: String): Serializable {
 
 	fun toHttpCookie(): HttpCookie {
 		val cookie = HttpCookie(name, value)

@@ -1,6 +1,5 @@
 package neutrino.project.clientwrapper.util.cookie
 
-import kotlinx.serialization.json.JSON
 import neutrino.project.clientwrapper.Client
 import java.io.*
 import java.net.HttpCookie
@@ -11,10 +10,9 @@ object CookieFileStore {
 
 	@Throws(IOException::class)
 	fun saveCookie(cookies: List<HttpCookie>?, saveFile: File) {
-		FileWriter(saveFile).use {
+		ObjectOutputStream(FileOutputStream(saveFile)).use {
 			val to = cookies?.map { CookieTo.of(it) } ?: emptyList()
-			val data = JSON.stringify(to)
-			it.write(data)
+			it.writeObject(to)
 			it.flush()
 		}
 	}
@@ -37,10 +35,10 @@ object CookieFileStore {
 	}
 
 	@Throws(IOException::class)
+	@Suppress("UNCHECKED_CAST")
 	fun restoreCookie(saveFile: File): List<HttpCookie>? {
-		return BufferedReader(FileReader(saveFile)).use {
-			val data = it.readText()
-			val to = JSON.parse<List<CookieTo>>(data)
+		return ObjectInputStream(FileInputStream(saveFile)).use {
+			val to = it.readObject() as List<CookieTo>
 			return@use to.map { it.toHttpCookie() }
 		}
 	}
