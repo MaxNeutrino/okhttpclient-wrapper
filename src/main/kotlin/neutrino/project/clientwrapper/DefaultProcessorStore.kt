@@ -1,5 +1,6 @@
 package neutrino.project.clientwrapper
 
+import neutrino.project.clientwrapper.processor.ProcessorStore
 import neutrino.project.clientwrapper.processor.request.RequestProcessor
 import neutrino.project.clientwrapper.processor.response.ResponseProcessor
 

@@ -37,26 +37,37 @@ object CookieFileStore {
 	@Throws(IOException::class)
 	@Suppress("UNCHECKED_CAST")
 	fun restoreCookie(saveFile: File): List<HttpCookie>? {
-		return ObjectInputStream(FileInputStream(saveFile)).use {
-			val to = it.readObject() as List<CookieTo>
-			return@use to.map { it.toHttpCookie() }
-		}
+		return if (saveFile.exists())
+			ObjectInputStream(FileInputStream(saveFile)).use {
+				val to = it.readObject() as List<CookieTo>
+				return@use to.map { it.toHttpCookie() }
+			}
+		else
+			emptyList()
 	}
 
 	@Throws(IOException::class)
 	fun restoreCookie(saveFile: String): List<HttpCookie>? {
-		return restoreCookie(File(saveFile))
+		val file = File(saveFile)
+		return if (file.exists())
+			restoreCookie(file)
+		else
+			emptyList()
 	}
 
 	@Throws(IOException::class)
 	fun restoreCookie(client: Client, saveFile: File) {
-		val store = client.getClientCookieHandler()?.getCookieStore()
-		restoreCookie(saveFile)?.forEach { cookie ->
-			store?.add(URI(client.getBaseUrl()), cookie)
+		if (saveFile.exists()) {
+			val store = client.getClientCookieHandler()?.getCookieStore()
+			restoreCookie(saveFile)?.forEach { cookie ->
+				store?.add(URI(client.getBaseUrl()), cookie)
+			}
 		}
 	}
 
 	fun restoreCookie(client: Client, saveFile: String) {
-		restoreCookie(client, File(saveFile))
+		val file = File(saveFile)
+		if (file.exists())
+			restoreCookie(client, file)
 	}
 }

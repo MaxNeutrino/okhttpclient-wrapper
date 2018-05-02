@@ -1,5 +1,8 @@
 package neutrino.project.clientwrapper
 
+import neutrino.project.clientwrapper.frame.MethodBuilder
+import neutrino.project.clientwrapper.frame.RequestMethod
+import neutrino.project.clientwrapper.processor.ProcessorStore
 import neutrino.project.clientwrapper.storage.DefaultStorageProvider
 import neutrino.project.clientwrapper.storage.StorageProvider
 import neutrino.project.clientwrapper.util.cookie.DefaultClientCookieHandler
@@ -51,14 +54,12 @@ class OkHttpClientWrapper(private var baseUrl: String,
 		return cookieHandler
 	}
 
-	override fun get(url: String, customUrl: String?, body: Map<String, String>?,
-					 header: Map<String, String>?): Call? {
-
+	override fun get(url: String, customUrl: String?, body: Params?, header: Params?): Call? {
 		var request = Request.Builder()
 				.url(customUrl ?: "$baseUrl$url")
 				.get()
 
-		header?.forEach { t, u -> request.addHeader(t, u) }
+		header?.getParams()?.forEach { request.addHeader(it.first, it.second) }
 
 		if(userAgent.isNotEmpty()) {
 			request.addHeader("User-Agent", userAgent)
@@ -72,12 +73,11 @@ class OkHttpClientWrapper(private var baseUrl: String,
 		return coreClient.newCall(request.build())
 	}
 
-	override fun post(url: String, customUrl: String?, body: Map<String, String>,
-					  header: Map<String, String>?): Call? {
+	override fun post(url: String, customUrl: String?, body: Params, header: Params?): Call? {
 		var request = Request.Builder()
 				.url(customUrl ?: "$baseUrl$url")
 
-		header?.forEach { t, u -> request.addHeader(t, u) }
+		header?.getParams()?.forEach { request.addHeader(it.first, it.second) }
 
 		if(userAgent.isNotEmpty()) {
 			request.addHeader("User-Agent", userAgent)
@@ -85,8 +85,8 @@ class OkHttpClientWrapper(private var baseUrl: String,
 
 		val formBody = FormBody.Builder()
 
-		body.forEach{
-			formBody.add(it.key, it.value)
+		body.getParams().forEach{
+			formBody.add(it.first, it.second)
 		}
 
 		request.post(formBody.build())
@@ -139,6 +139,20 @@ class OkHttpClientWrapper(private var baseUrl: String,
 
 	override fun send(request: Request): Call? {
 		return coreClient.newCall(request)
+	}
+
+	override fun processAndSend(request: Request.Builder): Call? {
+		var builder = request
+		processorStore.getRequestProcessors()
+				.forEach {
+					builder = it.process(this, builder)
+				}
+
+		return send(builder.build())
+	}
+
+	override fun <T: Any> send(request: RequestMethod<T>): T {
+		return MethodBuilder<T>(this).build(request)
 	}
 
 	override fun getProcessorStore(): ProcessorStore = processorStore

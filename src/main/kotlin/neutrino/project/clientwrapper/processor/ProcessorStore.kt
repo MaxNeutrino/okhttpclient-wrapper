@@ -1,4 +1,4 @@
-package neutrino.project.clientwrapper
+package neutrino.project.clientwrapper.processor
 
 import neutrino.project.clientwrapper.processor.request.RequestProcessor
 import neutrino.project.clientwrapper.processor.response.ResponseProcessor

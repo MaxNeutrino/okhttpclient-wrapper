@@ -1,6 +1,6 @@
 package neutrino.project.clientwrapper.processor.response
 
-import neutrino.project.clientwrapper.ProcessorStore
+import neutrino.project.clientwrapper.processor.ProcessorStore
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody
