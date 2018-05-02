@@ -50,6 +50,8 @@ class SingleParamsProcessor<T>(
 		var methodModel = RequestMethodModel(requestBuilder = Request.Builder(), apiUrl = method.url,
 				customUrl = method.customUrl)
 
+		methodModel.setMethod(method)
+
 		modifications.forEach { name, func -> methodModel = func(namedParams[name]!!, methodModel) }
 		return methodModel
 	}

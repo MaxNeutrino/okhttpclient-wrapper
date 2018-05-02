@@ -108,6 +108,8 @@ class CountableParamsProcessor<T : Any>(
 		var methodModel = RequestMethodModel(requestBuilder = Request.Builder(), apiUrl = method.url,
 				customUrl = method.customUrl)
 
+		methodModel.setMethod(method)
+
 		namedParams.forEach { name, params ->
 			methodModel = modifications[name]!!(params, methodModel)
 		}

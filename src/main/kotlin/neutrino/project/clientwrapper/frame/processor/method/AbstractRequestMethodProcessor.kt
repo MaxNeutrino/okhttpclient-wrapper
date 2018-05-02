@@ -7,7 +7,7 @@ import neutrino.project.clientwrapper.util.exception.CountableException
 
 
 abstract class AbstractRequestMethodProcessor<T : Any>(
-		protected val isCountableEnabled: Boolean) : RequestMethodProcessor<T>, Interruptable {
+		private val isCountableEnabled: Boolean) : RequestMethodProcessor<T>, Interruptable {
 
 	protected val contentModifications: Map<String, (Params, RequestMethodModel) -> RequestMethodModel> = mapOf(
 			"queries" to ::processQuery,

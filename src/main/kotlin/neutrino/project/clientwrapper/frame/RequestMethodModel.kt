@@ -29,6 +29,14 @@ data class RequestMethodModel(
 		return requestBuilder
 	}
 
+	fun setMethod(method: RequestMethod<*>) {
+		requestMethod = when(method) {
+			is GetMethod -> RequestMethodName.GET
+			is PostMethod -> RequestMethodName.POST
+			is JsonPostMethod -> RequestMethodName.POST
+		}
+	}
+
 	fun getUrl(): String {
 		return if (apiUrl != null)
 			apiUrl!!

@@ -3,6 +3,7 @@ package neutrino.project.clientwrapper.frame
 import neutrino.project.clientwrapper.util.exception.RequestMethodException
 import neutrino.project.clientwrapper.util.exception.TypeNotFoundException
 import neutrino.project.clientwrapper.util.ext.findGenerics
+import neutrino.project.clientwrapper.util.ext.parentOf
 import okhttp3.Response
 import okhttp3.Call
 
@@ -28,8 +29,8 @@ data class ResponseConsumer<T>(
 
 		val returnable = this.findGenerics().first()
 
-		if (!returnable.isAssignableFrom(result::class.java))
-			throw TypeNotFoundException("Expected ${returnable.name} actual ${result::class.qualifiedName}")
+		if (!(returnable parentOf result::class))
+			throw TypeNotFoundException("Expected ${returnable.qualifiedName} actual ${result::class.qualifiedName}")
 
 		return result as T
 	}
