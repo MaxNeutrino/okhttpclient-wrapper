@@ -34,6 +34,7 @@ data class RequestMethodModel(
 			is GetMethod -> RequestMethodName.GET
 			is PostMethod -> RequestMethodName.POST
 			is JsonPostMethod -> RequestMethodName.POST
+			else -> throw IllegalStateException()
 		}
 	}
 

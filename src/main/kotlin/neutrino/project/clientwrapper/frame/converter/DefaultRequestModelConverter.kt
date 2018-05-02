@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaField
 
@@ -24,6 +25,13 @@ class DefaultRequestModelConverter(
 	override fun convert(content: Content): Params {
 		val model = content.model ?: return params()
 		val properties = model::class.declaredMemberProperties
+
+		val countAnnotated = properties.filter {
+			it.annotations.find { it is Count } != null
+		}
+
+		if (countAnnotated.size > 1)
+			throw CountableException("Too many countable params")
 
 		val paramPairs = properties.mapNotNull { property ->
 			val isCountable = processCountable(content, property)
@@ -82,7 +90,8 @@ class DefaultRequestModelConverter(
 	@Throws(CountableException::class)
 	private fun processCountable(content: Content, property: KProperty1<*, Any?>): Boolean {
 		val javaField = property.javaField ?: return false
-		return if (javaField.isAnnotationPresent(Count::class.java)) {
+		val countAnnotation = property.annotations.find { it is Count }
+		return if (countAnnotation != null) {
 			if (content.countable != null)
 				throw CountableException("Too many countable params")
 

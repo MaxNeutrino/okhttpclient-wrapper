@@ -7,7 +7,7 @@ import neutrino.project.clientwrapper.frame.converter.RequestModelConverter
 import kotlin.reflect.KClass
 
 
-sealed class RequestMethod<T> {
+open class RequestMethod<T> protected constructor() {
 	var url: String? = null
 	var customUrl: String? = null
 	var dateTimePattern: String = "yyyy-MM-dd hh:mm"
@@ -28,10 +28,10 @@ sealed class RequestMethod<T> {
 	var pathCountable: Countable? = null
 	var pathModelConverter: KClass<out RequestModelConverter>? = null
 
-	var headersParam: Params? = null
+	var headersParams: Params? = null
 	var headersMap: Map<String, String>? = null
-	val headersModel: Any? = null
-	val headersCountable: Countable? = null
+	var headersModel: Any? = null
+	var headersCountable: Countable? = null
 	var headersModelConverter: KClass<out RequestModelConverter>? = null
 
 	val responseMapper: KClass<out ResponseMapper<T>>? = null

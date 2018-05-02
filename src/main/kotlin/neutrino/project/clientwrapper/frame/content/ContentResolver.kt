@@ -1,7 +1,7 @@
 package neutrino.project.clientwrapper.frame.content
 
 import neutrino.project.clientwrapper.frame.RequestMethod
-import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
 
@@ -13,14 +13,30 @@ class ReflectiveContentResolver(private val nameContaining: String) : ContentRes
 
 	override fun resolve(method: RequestMethod<out Any>): Content? {
 		val methodClass = method::class
-		val fields = methodClass.declaredMemberProperties
+		val fields = methodClass.memberProperties
 				.filter { it.name.contains(nameContaining) }
 
 		if (fields.isEmpty())
 			return null
 
-		val objects = fields.map { it.getter.call(method) }
+		val objects = fields.map { it.name to it.getter.call(method) }
+				.toMap()
 
-		return Content::class.primaryConstructor!!.call(nameContaining, *objects.toTypedArray())
+		val primaryConstructor = Content::class.primaryConstructor!!
+		val params = primaryConstructor.parameters
+
+		val objectNames = objects.keys
+		val args = params.map { param ->
+			if (param.name == "name") {
+				nameContaining
+			} else {
+				val name = objectNames.filter {
+					it.contains(param.name ?: "", true)
+				}.first()
+				objects[name]
+			}
+		}.toTypedArray()
+
+		return Content::class.primaryConstructor!!.call(*args)
 	}
 }
