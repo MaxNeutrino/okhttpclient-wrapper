@@ -5,6 +5,7 @@ import neutrino.project.clientwrapper.frame.Interruptable
 import neutrino.project.clientwrapper.frame.RequestMethod
 import neutrino.project.clientwrapper.frame.ResponseConsumer
 import neutrino.project.clientwrapper.frame.content.Content
+import neutrino.project.clientwrapper.frame.content.JsonContent
 import neutrino.project.clientwrapper.util.exception.IterableModelNotFoundException
 import neutrino.project.clientwrapper.util.ext.collect
 import java.util.concurrent.CompletableFuture
@@ -16,7 +17,8 @@ class IterableMethodProcessor<T : Any>(
 		private val method: RequestMethod<*>,
 		private val client: Client,
 		private val iterableContent: Content,
-		private val contents: List<Content>
+		private val contents: List<Content>,
+		private val jsonContent: JsonContent?
 ) : AbstractRequestMethodProcessor<T>(method.isCountableEnabled) {
 
 	@Volatile
@@ -67,7 +69,7 @@ class IterableMethodProcessor<T : Any>(
 
 			contentMap[modelContent.name] = modelContent
 
-			val singleMethodProcessor = SingleMethodProcessor<T>(method, client, contentMap.values.toList())
+			val singleMethodProcessor = SingleMethodProcessor<T>(method, client, contentMap.values.toList(), jsonContent)
 			interruptableList.add(singleMethodProcessor)
 
 			processor(singleMethodProcessor)

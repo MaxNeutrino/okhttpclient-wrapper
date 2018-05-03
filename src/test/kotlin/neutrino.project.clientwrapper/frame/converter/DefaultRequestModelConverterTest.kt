@@ -1,8 +1,8 @@
-package neutrino.project.clientwrapper.frame
+package neutrino.project.clientwrapper.frame.converter
 
 import neutrino.project.clientwrapper.Params
+import neutrino.project.clientwrapper.frame.AbstractConverterTest
 import neutrino.project.clientwrapper.frame.content.Content
-import neutrino.project.clientwrapper.frame.converter.DefaultRequestModelConverter
 import neutrino.project.clientwrapper.params
 
 class DefaultRequestModelConverterTest : AbstractConverterTest() {

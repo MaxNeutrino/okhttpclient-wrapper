@@ -13,7 +13,8 @@ abstract class AbstractRequestMethodProcessor<T : Any>(
 			"queries" to ::processQuery,
 			"path" to ::processPath,
 			"body" to ::processBody,
-			"headers" to ::processHeaders
+			"headers" to ::processHeaders,
+			"json" to ::processJson
 	)
 
 	protected fun getContentNames() = contentModifications.keys

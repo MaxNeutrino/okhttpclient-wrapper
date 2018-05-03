@@ -50,5 +50,5 @@ class PostMethod<T> : RequestMethod<T>() {
 class JsonPostMethod<T> : RequestMethod<T>() {
 	var json: String? = null
 	var jsonModel: Any? = null
-	var jsonConverter: KClass<out RequestJsonConverter<Any>>? = null
+	var jsonConverter: KClass<out RequestJsonConverter>? = null
 }

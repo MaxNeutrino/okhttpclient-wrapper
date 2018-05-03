@@ -54,3 +54,11 @@ fun processJson(json: String, requestMethodModel: RequestMethodModel): RequestMe
 	requestMethodModel.requestBody = requestBody
 	return requestMethodModel
 }
+
+fun processJson(json: Params, requestMethodModel: RequestMethodModel): RequestMethodModel {
+	if (json.size > 1)
+		throw IllegalArgumentException("Invalid json")
+
+	val jsonString = json.first().second
+	return processJson(jsonString, requestMethodModel)
+}

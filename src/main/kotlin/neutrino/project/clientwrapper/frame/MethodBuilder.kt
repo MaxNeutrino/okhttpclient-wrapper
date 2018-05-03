@@ -1,8 +1,7 @@
 package neutrino.project.clientwrapper.frame
 
 import neutrino.project.clientwrapper.Client
-import neutrino.project.clientwrapper.frame.content.Content
-import neutrino.project.clientwrapper.frame.content.ReflectiveContentResolver
+import neutrino.project.clientwrapper.frame.content.*
 import neutrino.project.clientwrapper.frame.processor.method.IterableMethodProcessor
 import neutrino.project.clientwrapper.frame.processor.method.RequestMethodProcessor
 import neutrino.project.clientwrapper.frame.processor.method.SingleMethodProcessor
@@ -24,7 +23,7 @@ import kotlin.reflect.full.primaryConstructor
 
 class MethodBuilder<T : Any>(private val client: Client) {
 
-	private val resolversName = mapOf(
+	private val resolvers = mapOf(
 			"queries" to ::processQuery,
 			"path" to ::processPath,
 			"body" to ::processBody,
@@ -41,24 +40,31 @@ class MethodBuilder<T : Any>(private val client: Client) {
 		val genericType = this.generic
 		responseMapper = method.responseMapper ?: getDefaultMapper(genericType.java)
 
-		val contents = resolversName.map { ReflectiveContentResolver(it.key).resolve(method) }
+		val contents = resolvers.map { ReflectiveContentResolver(it.key).resolve(method) }
 				.filterNotNull()
+
+		val jsonContent = if (method is JsonPostMethod<T>) {
+			jsonContentResolver(method)
+		} else null
 
 		val iterableModelContent = findIterableModel(contents)
 
 		return when {
 			genericType subOf Expected::class -> {
 				val expectedGeneric = genericType.generic
-				val methodProcessor = createMethodProcessor(expectedGeneric, iterableModelContent, contents, method)
+				val methodProcessor = createMethodProcessor(expectedGeneric, iterableModelContent, contents,
+						jsonContent, method)
 				genericType.primaryConstructor?.call(methodProcessor)
 			}
 			genericType subOf Future::class -> {
 				val completableGeneric = genericType.generic
-				val methodProcessor = createMethodProcessor(completableGeneric, iterableModelContent, contents, method)
+				val methodProcessor = createMethodProcessor(completableGeneric, iterableModelContent, contents,
+						jsonContent, method)
 				getCompletableFuture { methodProcessor.process() }
 			}
 			else -> {
-				val methodProcessor = createMethodProcessor(genericType, iterableModelContent, contents, method)
+				val methodProcessor = createMethodProcessor(genericType, iterableModelContent, contents, jsonContent,
+						method)
 
 				methodProcessor.process()
 			}
@@ -68,6 +74,7 @@ class MethodBuilder<T : Any>(private val client: Client) {
 	private fun <T : Any> createMethodProcessor(clazz: KClass<T>,
 												iterableModelContent: Content?,
 												contents: Collection<Content>,
+												jsonContent: JsonContent?,
 												method: RequestMethod<*>): RequestMethodProcessor<T> {
 		return if (iterableModelContent != null) {
 			responseMapper ?: throw RequestMethodException("Can't send iterable request without mapper")
@@ -75,13 +82,15 @@ class MethodBuilder<T : Any>(private val client: Client) {
 					method = method,
 					client = client,
 					iterableContent = iterableModelContent,
-					contents = contents.toList()
+					contents = contents.toList(),
+					jsonContent = jsonContent
 			)
 		} else {
 			SingleMethodProcessor(
 					method = method,
 					client = client,
-					contents = contents.toList()
+					contents = contents.toList(),
+					jsonContent = jsonContent
 			)
 		}
 	}

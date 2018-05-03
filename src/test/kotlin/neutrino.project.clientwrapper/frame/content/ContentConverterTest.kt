@@ -1,8 +1,7 @@
-package neutrino.project.clientwrapper.frame
+package neutrino.project.clientwrapper.frame.content
 
 import neutrino.project.clientwrapper.Params
-import neutrino.project.clientwrapper.frame.content.Content
-import neutrino.project.clientwrapper.frame.content.ContentConverter
+import neutrino.project.clientwrapper.frame.AbstractConverterTest
 import neutrino.project.clientwrapper.params
 
 

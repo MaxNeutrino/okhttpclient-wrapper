@@ -1,5 +1,6 @@
 package neutrino.project.clientwrapper.frame.content
 
+import neutrino.project.clientwrapper.frame.JsonPostMethod
 import neutrino.project.clientwrapper.frame.RequestMethod
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -39,4 +40,13 @@ class ReflectiveContentResolver(private val nameContaining: String) : ContentRes
 
 		return Content::class.primaryConstructor!!.call(*args)
 	}
+}
+
+
+fun jsonContentResolver(method: JsonPostMethod<out Any>): JsonContent {
+	return JsonContent(
+			method.json,
+			method.jsonModel,
+			method.jsonConverter
+	)
 }

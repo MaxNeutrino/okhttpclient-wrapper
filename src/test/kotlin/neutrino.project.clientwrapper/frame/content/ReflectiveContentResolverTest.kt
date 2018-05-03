@@ -1,8 +1,6 @@
-package neutrino.project.clientwrapper.frame
+package neutrino.project.clientwrapper.frame.content
 
-import neutrino.project.clientwrapper.frame.content.Content
-import neutrino.project.clientwrapper.frame.content.Countable
-import neutrino.project.clientwrapper.frame.content.ReflectiveContentResolver
+import neutrino.project.clientwrapper.frame.PostMethod
 import neutrino.project.clientwrapper.params
 import okhttp3.Response
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,7 +20,8 @@ class ReflectiveContentResolverTest {
 			queriesCountable = Countable("awesomeQuery", 1, 15, { _, _ -> true })
 			pathMap = mapOf("user" to "userId", "username" to "qwerty")
 			headersParams = params("name" to "header")
-			bodyModel = ReflectiveResolverEntity(time = time)
+			bodyModel = ReflectiveResolverEntity(
+					time = time)
 		}
 	}
 
@@ -44,7 +43,8 @@ class ReflectiveContentResolverTest {
 
 	private val bodyContent = Content(
 			name = "body",
-			model = ReflectiveResolverEntity(time = time)
+			model = ReflectiveResolverEntity(
+					time = time)
 	)
 
 	@Test
