@@ -1,5 +1,6 @@
 package neutrino.project.clientwrapper
 
+import neutrino.project.clientwrapper.frame.Expected
 import neutrino.project.clientwrapper.frame.MethodBuilder
 import neutrino.project.clientwrapper.frame.RequestMethod
 import neutrino.project.clientwrapper.processor.ProcessorStore
@@ -11,6 +12,7 @@ import okhttp3.*
 import java.io.File
 import java.net.CookieManager
 import java.net.URI
+import kotlin.reflect.KClass
 
 
 class OkHttpClientWrapper(private var baseUrl: String,
@@ -151,8 +153,8 @@ class OkHttpClientWrapper(private var baseUrl: String,
 		return send(builder.build())
 	}
 
-	override fun <T: Any> send(request: RequestMethod<T>): T {
-		return MethodBuilder<T>(this).build(request)
+	override fun <T : Any> send(expectedClass: KClass<T>, request: RequestMethod<T>): Expected<T> {
+		return MethodBuilder(this, expectedClass).build(request)
 	}
 
 	override fun getProcessorStore(): ProcessorStore = processorStore

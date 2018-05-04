@@ -1,27 +1,24 @@
 package neutrino.project.clientwrapper.frame
 
 import neutrino.project.clientwrapper.Client
-import neutrino.project.clientwrapper.frame.content.*
+import neutrino.project.clientwrapper.frame.content.Content
+import neutrino.project.clientwrapper.frame.content.JsonContent
+import neutrino.project.clientwrapper.frame.content.ReflectiveContentResolver
+import neutrino.project.clientwrapper.frame.content.jsonContentResolver
 import neutrino.project.clientwrapper.frame.processor.method.IterableMethodProcessor
 import neutrino.project.clientwrapper.frame.processor.method.RequestMethodProcessor
 import neutrino.project.clientwrapper.frame.processor.method.SingleMethodProcessor
 import neutrino.project.clientwrapper.util.exception.IterableModelException
-import neutrino.project.clientwrapper.util.exception.RequestMethodException
 import neutrino.project.clientwrapper.util.exception.ResponseMapperNotFoundException
 import neutrino.project.clientwrapper.util.exception.UrlNotFoundException
-import neutrino.project.clientwrapper.util.ext.findGenerics
-import neutrino.project.clientwrapper.util.ext.generic
-import neutrino.project.clientwrapper.util.ext.subOf
 import okhttp3.Call
 import okhttp3.Response
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
 import java.util.function.Supplier
 import kotlin.reflect.KClass
-import kotlin.reflect.full.primaryConstructor
 
-class MethodBuilder<T : Any>(private val client: Client) {
+class MethodBuilder<T: Any>(private val client: Client, private val type: KClass<out T>) {
 
 	private val resolvers = mapOf(
 			"queries" to ::processQuery,
@@ -34,11 +31,12 @@ class MethodBuilder<T : Any>(private val client: Client) {
 	private var responseMapper: KClass<out ResponseMapper<*>>? = null
 
 	@Suppress("UNCHECKED_CAST")
-	fun build(method: RequestMethod<T>): T {
+	fun build(method: RequestMethod<T>): Expected<T> {
 		method.url ?: throw UrlNotFoundException()
 
-		val genericType = this.generic
-		responseMapper = method.responseMapper ?: getDefaultMapper(genericType.java)
+		responseMapper = method.responseMapper ?: getDefaultMapper(type.java)
+		method.responseMapper = responseMapper
+
 
 		val contents = resolvers.map { ReflectiveContentResolver(it.key).resolve(method) }
 				.filterNotNull()
@@ -49,26 +47,8 @@ class MethodBuilder<T : Any>(private val client: Client) {
 
 		val iterableModelContent = findIterableModel(contents)
 
-		return when {
-			genericType subOf Expected::class -> {
-				val expectedGeneric = genericType.generic
-				val methodProcessor = createMethodProcessor(expectedGeneric, iterableModelContent, contents,
-						jsonContent, method)
-				genericType.primaryConstructor?.call(methodProcessor)
-			}
-			genericType subOf Future::class -> {
-				val completableGeneric = genericType.generic
-				val methodProcessor = createMethodProcessor(completableGeneric, iterableModelContent, contents,
-						jsonContent, method)
-				getCompletableFuture { methodProcessor.process() }
-			}
-			else -> {
-				val methodProcessor = createMethodProcessor(genericType, iterableModelContent, contents, jsonContent,
-						method)
-
-				methodProcessor.process()
-			}
-		} as T
+		val methodProcessor = createMethodProcessor(type, iterableModelContent, contents, jsonContent, method)
+		return Expected(methodProcessor)
 	}
 
 	private fun <T : Any> createMethodProcessor(clazz: KClass<T>,
@@ -77,7 +57,6 @@ class MethodBuilder<T : Any>(private val client: Client) {
 												jsonContent: JsonContent?,
 												method: RequestMethod<*>): RequestMethodProcessor<T> {
 		return if (iterableModelContent != null) {
-			responseMapper ?: throw RequestMethodException("Can't send iterable request without mapper")
 			IterableMethodProcessor(
 					method = method,
 					client = client,
@@ -95,11 +74,10 @@ class MethodBuilder<T : Any>(private val client: Client) {
 		}
 	}
 
-	private fun getDefaultMapper(genericType: Class<*>): KClass<out ResponseMapper<*>>? {
+	private fun getDefaultMapper(genericType: Class<out Any>): KClass<out ResponseMapper<*>>? {
 		return when {
-			Response::class.java.isAssignableFrom(genericType) -> MockResponseMapper::class
+			Response::class.java.isAssignableFrom(genericType) -> ResponseMapperImpl::class
 			String::class.java.isAssignableFrom(genericType) -> StringResponseMapper::class
-			Future::class.java.isAssignableFrom(genericType) -> getDefaultMapper(genericType.findGenerics().first())
 			Call::class.java.isAssignableFrom(genericType) -> null
 			else -> throw ResponseMapperNotFoundException()
 		}

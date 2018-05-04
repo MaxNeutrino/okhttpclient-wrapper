@@ -17,7 +17,7 @@ class CountableParamsProcessor<T : Any>(
 		private val client: Client,
 		private val countableParam: Pair<String, Countable>,
 		private val modifications: Map<String, (Params, RequestMethodModel) -> RequestMethodModel>
-) : ParamsProcessor<T> {
+) : ParamsProcessor<T>() {
 
 	private var isInterrupt: Boolean = false
 
@@ -32,11 +32,9 @@ class CountableParamsProcessor<T : Any>(
 			val response = call.execute()
 			val body = response.body()
 
-			val toCheckResponse = cloneResponse(response, body)
-			val toMapResponse = cloneResponse(response, body)
-
-			if (toMapResponse != null)
-				responseConsumers.add(applyMapper(method.responseMapper, toMapResponse))
+			val doubleResponse = doubleResponse(response, body)
+			val toCheckResponse = doubleResponse?.first
+			val toMapResponse = doubleResponse?.second
 
 			val isContinue = !countable.limit(countable.count, toCheckResponse)
 
@@ -44,6 +42,9 @@ class CountableParamsProcessor<T : Any>(
 				break
 
 			if (isContinue) {
+				if (toMapResponse != null)
+					responseConsumers.add(applyMapper(method.responseMapper, toMapResponse))
+
 				countable.count = countable.count + countable.step
 			} else {
 				break
@@ -54,50 +55,7 @@ class CountableParamsProcessor<T : Any>(
 	}
 
 	override fun processAsync(namedParams: Map<String, Params>): CompletableFuture<ResponseConsumer<T>> {
-		val futures = mutableListOf<CompletableFuture<ResponseConsumer<T>?>>()
-		val mutableNamedParams = namedParams.toMutableMap()
-		var isBreak = false
-		while (true) {
-			if (isBreak)
-				break
-
-			val methodModel = createMethodModel(mutableNamedParams)
-			val countable = countableParam.second
-
-			val call = client.processAndSend(methodModel.build())!!
-			val future = call.executeAsync().handle { response, e ->
-				if (e != null)
-					throw e
-
-				val body = response.body()
-
-				val toCheckResponse = cloneResponse(response, body)
-				val toMapResponse = cloneResponse(response, body)
-
-				val isContinue = !countable.limit(countable.count, toCheckResponse)
-
-				if (isInterrupt)
-					isBreak = true
-
-				if (isContinue) {
-					countable.count = countable.count + countable.step
-				} else {
-					isBreak = true
-				}
-
-				if (toMapResponse != null)
-					applyMapper(method.responseMapper, toMapResponse)
-				else
-					null
-			}
-
-			futures.add(future)
-		}
-
-		return futures.collect()
-				.thenApply {
-					it.collect()
-				}
+		return CompletableFuture.supplyAsync { process(namedParams) }
 	}
 
 	private fun createMethodModel(namedParams: MutableMap<String, Params>): RequestMethodModel {
@@ -106,7 +64,7 @@ class CountableParamsProcessor<T : Any>(
 		namedParams[countableParam.first]!!.replace(param)
 
 		var methodModel = RequestMethodModel(requestBuilder = Request.Builder(), apiUrl = method.url,
-				customUrl = method.customUrl)
+				customUrl = method.customUrl, baseUrl = client.getBaseUrl())
 
 		methodModel.setMethod(method)
 

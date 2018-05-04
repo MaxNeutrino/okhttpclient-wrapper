@@ -99,7 +99,7 @@ class DefaultRequestModelConverter(
 			val name = getName(property)
 			val num = value as Int
 
-			val annotation = javaField.getAnnotation(Count::class.java)
+			val annotation = property.annotations.first { it is Count } as Count/*javaField.getAnnotation(Count::class.java)*/
 
 			val step = annotation.step
 			val stopper = annotation.limit

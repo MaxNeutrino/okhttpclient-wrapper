@@ -34,7 +34,7 @@ open class RequestMethod<T> protected constructor() {
 	var headersCountable: Countable? = null
 	var headersModelConverter: KClass<out RequestModelConverter>? = null
 
-	val responseMapper: KClass<out ResponseMapper<T>>? = null
+	var responseMapper: KClass<out ResponseMapper<*>>? = null
 }
 
 class GetMethod<T> : RequestMethod<T>()

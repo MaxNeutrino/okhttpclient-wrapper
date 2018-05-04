@@ -1,5 +1,6 @@
 package neutrino.project.clientwrapper
 
+import neutrino.project.clientwrapper.frame.Expected
 import neutrino.project.clientwrapper.frame.RequestMethod
 import neutrino.project.clientwrapper.processor.ProcessorStore
 import neutrino.project.clientwrapper.processor.request.RequestProcessor
@@ -20,6 +21,7 @@ import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import kotlin.reflect.KClass
 
 
 interface Client {
@@ -49,7 +51,7 @@ interface Client {
 
 	fun processAndSend(request: Request.Builder): Call?
 
-	fun <T: Any> send(request: RequestMethod<T>): T
+	fun <T: Any> send(expectedClass: KClass<T>, request: RequestMethod<T>): Expected<T>
 
 	fun getProcessorStore(): ProcessorStore
 

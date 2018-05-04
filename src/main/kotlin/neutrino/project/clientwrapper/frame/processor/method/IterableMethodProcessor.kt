@@ -29,11 +29,11 @@ class IterableMethodProcessor<T : Any>(
 	@Throws(IterableModelNotFoundException::class, ClassCastException::class)
 	@Suppress("UNCHECKED_CAST")
 	override fun process(): ResponseConsumer<T> {
-		return toResponses(SingleMethodProcessor<T>::process).collect()
+		return toResponses().collect()
 	}
 
 	override fun processAsync(): CompletableFuture<ResponseConsumer<T>> {
-		return toResponses(SingleMethodProcessor<T>::processAsync).collect()
+		return asyncToResponses().collect()
 				.thenApply { it.collect() }
 	}
 
@@ -45,18 +45,18 @@ class IterableMethodProcessor<T : Any>(
 		}
 	}
 
-	private fun <R: Any> toResponses(processor: (SingleMethodProcessor<T>) -> R): List<R> {
+	private fun toResponses(): List<ResponseConsumer<T>> {
 		val model = iterableContent.model ?: throw IterableModelNotFoundException()
 
 		model as Iterable<*>
-
-		val contentMap = contents.map { it.name to it }.toMap().toMutableMap()
 
 		val modelStream = createStream(model)
 
 		return modelStream.map { m ->
 			if (isInterrupt)
 				return@map null
+
+			val contentMap = contents.map { it.name to it }.toMap().toMutableMap()
 
 			val modelContent = Content(
 					name = iterableContent.name,
@@ -69,10 +69,45 @@ class IterableMethodProcessor<T : Any>(
 
 			contentMap[modelContent.name] = modelContent
 
-			val singleMethodProcessor = SingleMethodProcessor<T>(method, client, contentMap.values.toList(), jsonContent)
+
+			val singleMethodProcessor = SingleMethodProcessor<T>(method, client, contentMap.values.toList(),
+					jsonContent)
 			interruptableList.add(singleMethodProcessor)
 
-			processor(singleMethodProcessor)
+			singleMethodProcessor.process()
+		}.collect(Collectors.toList())
+				.filterNotNull()
+	}
+
+	private fun asyncToResponses(): List<CompletableFuture<ResponseConsumer<T>>> {
+		val model = iterableContent.model ?: throw IterableModelNotFoundException()
+
+		model as Iterable<*>
+
+		val modelStream = createStream(model)
+
+		return modelStream.map { m ->
+			if (isInterrupt)
+				return@map null
+
+			val contentMap = contents.map { it.name to it }.toMap().toMutableMap()
+
+			val modelContent = Content(
+					name = iterableContent.name,
+					params = iterableContent.params,
+					map = iterableContent.map,
+					model = m,
+					countable = iterableContent.countable,
+					modelConverter = iterableContent.modelConverter
+			)
+
+			contentMap[modelContent.name] = modelContent
+
+			val singleMethodProcessor = SingleMethodProcessor<T>(method, client, contentMap.values.toList(),
+					jsonContent)
+			interruptableList.add(singleMethodProcessor)
+
+			singleMethodProcessor.processAsync()
 		}.collect(Collectors.toList())
 				.filterNotNull()
 	}
@@ -81,6 +116,4 @@ class IterableMethodProcessor<T : Any>(
 		isInterrupt = true
 		interruptableList.forEach(Interruptable::interrupt)
 	}
-
-
 }

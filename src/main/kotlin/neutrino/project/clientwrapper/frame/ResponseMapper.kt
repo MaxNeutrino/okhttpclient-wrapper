@@ -18,7 +18,7 @@ class StringResponseMapper : ResponseMapper<String> {
 	}
 }
 
-class MockResponseMapper : ResponseMapper<Response> {
+class ResponseMapperImpl : ResponseMapper<Response> {
 	override fun map(response: Response): Response {
 		return response
 	}

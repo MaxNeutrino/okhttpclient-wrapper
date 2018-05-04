@@ -53,6 +53,10 @@ class Params private constructor(
 		return params
 	}
 
+	inline fun forEach(action: (String, String) -> Unit) {
+		for (element in this) action(element.first, element.second)
+	}
+
 	override fun isEmpty() = params.size == 0
 
 	fun isNotEmpty() = !isEmpty()

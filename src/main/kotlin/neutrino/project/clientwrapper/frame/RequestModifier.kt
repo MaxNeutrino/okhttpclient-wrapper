@@ -9,8 +9,10 @@ import okhttp3.RequestBody
 fun processQuery(params: Params, requestMethodModel: RequestMethodModel): RequestMethodModel {
 	var url = requestMethodModel.getUrl()
 	val query = params.joinToString("&") { "${it.first}=${it.second}" }
-	url = "$url?$query"
-	requestMethodModel.setUrl(url)
+	if(query.isNotEmpty()) {
+		url = "$url?$query"
+		requestMethodModel.setUrl(url)
+	}
 	return requestMethodModel
 }
 

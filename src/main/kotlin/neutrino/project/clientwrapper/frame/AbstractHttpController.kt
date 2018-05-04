@@ -8,23 +8,23 @@ import neutrino.project.clientwrapper.Client
 abstract class AbstractHttpController(protected val client: Client) {
 
 	@Suppress("UNCHECKED_CAST")
-	protected fun <T : Any> post(post: PostMethod<T>.() -> Unit): T {
+	protected inline fun <reified T : Any> post(post: PostMethod<T>.() -> Unit): Expected<T> {
 		val method = PostMethod<T>()
 		post(method)
-		return client.send(method)
+		return client.send(T::class, method)
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	protected fun <T : Any> get(get: GetMethod<T>.() -> Unit): T {
+	protected inline fun <reified T : Any> get(get: GetMethod<T>.() -> Unit): Expected<T> {
 		val method = GetMethod<T>()
 		get(method)
-		return client.send(method)
+		return client.send(T::class, method)
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	protected fun <T : Any> jsonPost(jsonPost: JsonPostMethod<T>.() -> Unit): T {
+	protected inline fun <reified T : Any> jsonPost(jsonPost: JsonPostMethod<T>.() -> Unit): Expected<T> {
 		val method = JsonPostMethod<T>()
 		jsonPost(method)
-		return client.send(method)
+		return client.send(T::class, method)
 	}
 }

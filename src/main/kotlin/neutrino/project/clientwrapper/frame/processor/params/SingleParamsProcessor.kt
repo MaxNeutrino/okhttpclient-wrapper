@@ -14,7 +14,7 @@ class SingleParamsProcessor<T>(
 		private val method: RequestMethod<*>,
 		private val client: Client,
 		private val modifications: Map<String, (Params, RequestMethodModel) -> RequestMethodModel>
-) : ParamsProcessor<T> {
+) : ParamsProcessor<T>() {
 
 	private var isInterrupt = false
 
@@ -48,11 +48,14 @@ class SingleParamsProcessor<T>(
 
 	private fun createMethodModel(namedParams: Map<String, Params>): RequestMethodModel {
 		var methodModel = RequestMethodModel(requestBuilder = Request.Builder(), apiUrl = method.url,
-				customUrl = method.customUrl)
+				customUrl = method.customUrl, baseUrl = client.getBaseUrl())
 
 		methodModel.setMethod(method)
 
-		modifications.forEach { name, func -> methodModel = func(namedParams[name]!!, methodModel) }
+		modifications.forEach { name, func ->
+			if (namedParams.containsKey(name))
+				methodModel = func(namedParams[name]!!, methodModel)
+		}
 		return methodModel
 	}
 

@@ -31,10 +31,16 @@ class ReflectiveContentResolver(private val nameContaining: String) : ContentRes
 			if (param.name == "name") {
 				nameContaining
 			} else {
-				val name = objectNames.filter {
+				val names = objectNames.filter {
 					it.contains(param.name ?: "", true)
-				}.first()
-				objects[name]
+				}
+
+				if(names.isNotEmpty()) {
+					val name = names.first()
+					objects[name]
+				} else {
+					null
+				}
 			}
 		}.toTypedArray()
 

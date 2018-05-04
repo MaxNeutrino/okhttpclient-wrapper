@@ -1,33 +1,12 @@
 package neutrino.project.clientwrapper.util.ext
 
-import java.lang.reflect.ParameterizedType
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 
-
-fun Any.findGenerics(): List<KClass<*>> {
-	return this::class.findGenerics()
+fun genericByFunction(func: KFunction<*>): KClass<out Any> {
+	return func.returnType as KClass<*>
 }
 
-fun KClass<*>.findGenerics(): List<KClass<*>> {
-	return this.java.findGenerics().map { it.kotlin }
-}
-
-fun Class<*>.findGenerics(): List<Class<*>> {
-	val parameterizedType = this as ParameterizedType
-	return parameterizedType.actualTypeArguments
-			.map { it as Class<*> }
-}
-
-val Any.generic: KClass<*>
-	get() = this::class.generic
-
-
-val KClass<*>.generic: KClass<*>
-	get() = this.java.generic.kotlin
-
-
-val Class<*>.generic: Class<*>
-	get() = this.findGenerics().first()
 
 infix fun Any.subOf(model: Any): Boolean = model parentOf this
 
@@ -49,6 +28,10 @@ infix fun Class<*>.parentOf(type: Class<*>): Boolean = this.isAssignableFrom(typ
 
 infix fun Class<*>.parentOf(type: KClass<*>): Boolean = this.isAssignableFrom(type.java)
 
-infix fun Any.parentOf(type: KClass<*>): Boolean =this::class parentOf type
+infix fun Any.parentOf(type: KClass<*>): Boolean = this::class parentOf type
 
-infix fun Any.parentOf(type: Class<*>): Boolean = this ::class.java parentOf type
+infix fun Any.parentOf(type: Class<*>): Boolean = this::class.java parentOf type
+
+fun <T: Any> listType(): KClass<out List<T>> {
+	return listOf<T>()::class
+}

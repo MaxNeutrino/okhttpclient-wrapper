@@ -13,20 +13,40 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
 
-interface ParamsProcessor<T> : Interruptable {
+abstract class ParamsProcessor<T> : Interruptable {
 
-	fun process(namedParams: Map<String, Params>): ResponseConsumer<T>
+	abstract fun process(namedParams: Map<String, Params>): ResponseConsumer<T>
 
-	fun processAsync(namedParams: Map<String, Params>): CompletableFuture<ResponseConsumer<T>>
+	abstract fun processAsync(namedParams: Map<String, Params>): CompletableFuture<ResponseConsumer<T>>
 
 	fun cloneResponse(response: Response, body: ResponseBody?): Response? {
 		body ?: return null
 		return response.newBuilder()
 				.body(
 						ResponseBody.create(body.contentType(),
-								body.contentLength(),
-								body.source())
+								body.bytes())
 				).build()
+	}
+
+	fun doubleResponse(response: Response, body: ResponseBody?): Pair<Response, Response>? {
+		body ?: return null
+
+		val contentType = body.contentType()
+		val content = body.bytes()
+
+		val first = response.newBuilder()
+				.body(
+						ResponseBody.create(contentType,
+								content)
+				).build()
+
+		val second = response.newBuilder()
+				.body(
+						ResponseBody.create(contentType,
+								content)
+				).build()
+
+		return Pair(first, second)
 	}
 
 	fun applyMapper(mapperClass: KClass<out ResponseMapper<*>>?, call: Call): ResponseConsumer<T> {

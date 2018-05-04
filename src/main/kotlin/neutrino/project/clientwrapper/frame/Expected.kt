@@ -6,7 +6,7 @@ import java.util.concurrent.Executors
 import java.util.function.Supplier
 
 
-class Expected<T : Any>(private val methodProcessor: RequestMethodProcessor<T>) {
+class Expected<T : Any>(private val methodProcessor: RequestMethodProcessor<out T>) {
 
 	/**
 	 * Blocking send, used Call.execute()
@@ -24,7 +24,7 @@ class Expected<T : Any>(private val methodProcessor: RequestMethodProcessor<T>) 
 	 */
 	fun async(): CompletableFuture<T> {
 		return methodProcessor.processAsync()
-				.thenApply(ResponseConsumer<T>::getResult)
+				.thenApply(ResponseConsumer<out T>::getResult)
 	}
 
 	/**
@@ -35,5 +35,21 @@ class Expected<T : Any>(private val methodProcessor: RequestMethodProcessor<T>) 
 	fun fakeAsync(): CompletableFuture<T> {
 		val executor = Executors.newSingleThreadExecutor()
 		return CompletableFuture.supplyAsync(Supplier { block() }, executor)
+	}
+
+	companion object {
+		fun <T: Any> empty(): Expected<T> {
+			return Expected(EmptyRequestMethodProcessor())
+		}
+	}
+}
+
+private class EmptyRequestMethodProcessor<T: Any> : RequestMethodProcessor<T> {
+	override fun process(): ResponseConsumer<T> {
+		return ResponseConsumer()
+	}
+
+	override fun processAsync(): CompletableFuture<ResponseConsumer<T>> {
+		return CompletableFuture.completedFuture(process())
 	}
 }

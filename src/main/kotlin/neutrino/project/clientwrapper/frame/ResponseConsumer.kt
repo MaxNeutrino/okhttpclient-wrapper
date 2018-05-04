@@ -1,11 +1,8 @@
 package neutrino.project.clientwrapper.frame
 
 import neutrino.project.clientwrapper.util.exception.RequestMethodException
-import neutrino.project.clientwrapper.util.exception.TypeNotFoundException
-import neutrino.project.clientwrapper.util.ext.findGenerics
-import neutrino.project.clientwrapper.util.ext.parentOf
-import okhttp3.Response
 import okhttp3.Call
+import okhttp3.Response
 
 
 data class ResponseConsumer<T>(
@@ -27,10 +24,11 @@ data class ResponseConsumer<T>(
 			else -> throw RequestMethodException("ResponseConsumer is empty")
 		}!!
 
-		val returnable = this.findGenerics().first()
+		/*// TODO change with findGeneric
+		val returnable = *//*this.findGenerics().first()*//* this::class
 
 		if (!(returnable parentOf result::class))
-			throw TypeNotFoundException("Expected ${returnable.qualifiedName} actual ${result::class.qualifiedName}")
+			throw TypeNotFoundException("Expected ${returnable.qualifiedName} actual ${result::class.qualifiedName}")*/
 
 		return result as T
 	}
