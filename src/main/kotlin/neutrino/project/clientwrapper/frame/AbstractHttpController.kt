@@ -1,6 +1,7 @@
 package neutrino.project.clientwrapper.frame
 
 import neutrino.project.clientwrapper.Client
+import neutrino.project.clientwrapper.params
 
 /**
  * You need to inherit this class to using kotlin dsl as future in your http controller class
@@ -48,4 +49,12 @@ abstract class AbstractHttpController(protected val client: Client) {
 		jsonPut(method)
 		return client.send(T::class, method)
 	}
+}
+
+fun main(args: Array<String>) {
+	params(
+			"name1" to "value1",
+			"name2" to "value2",
+			"name3" to "value3"
+	)
 }

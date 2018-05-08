@@ -35,22 +35,22 @@ interface Client {
 	fun getClientCookieHandler(): ClientCookieHandler?
 
 	fun get(url: String = "", customUrl: String? = null, query: Params? = null,
-			header: Params? = null): Call
+			headers: Params? = null): Call
 
 	fun post(url: String = "", customUrl: String? = null, body: Params,
-			 header: Params? = null): Call
+			 headers: Params? = null): Call
 
 	fun put(url: String = "", customUrl: String? = null, body: Params,
-			header: Params? = null): Call
+			headers: Params? = null): Call
 
 	fun delete(url: String = "", customUrl: String? = null, query: Params,
-			   header: Params? = null): Call
+			   headers: Params? = null): Call
 
 	fun jsonPost(url: String = "", customUrl: String? = null, json: String,
-				 header: Params? = null): Call
+				 headers: Params? = null): Call
 
 	fun jsonPut(url: String = "", customUrl: String? = null, json: String,
-				header: Params? = null): Call
+				headers: Params? = null): Call
 
 	fun send(request: Request): Call
 

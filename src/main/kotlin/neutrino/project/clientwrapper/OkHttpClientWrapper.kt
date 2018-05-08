@@ -9,7 +9,6 @@ import neutrino.project.clientwrapper.storage.StorageProvider
 import neutrino.project.clientwrapper.util.cookie.DefaultClientCookieHandler
 import neutrino.project.clientwrapper.util.cookie.impl.ClientCookieHandler
 import okhttp3.*
-import java.io.File
 import java.net.CookieManager
 import java.net.URI
 import kotlin.reflect.KClass
@@ -58,40 +57,40 @@ class OkHttpClientWrapper(private var baseUrl: String,
 		return cookieHandler
 	}
 
-	override fun get(url: String, customUrl: String?, query: Params?, header: Params?): Call {
-		val request = createRequestWithoutBody(url, customUrl, query, header) { it.get() }
+	override fun get(url: String, customUrl: String?, query: Params?, headers: Params?): Call {
+		val request = createRequestWithoutBody(url, customUrl, query, headers) { it.get() }
 
 		return coreClient.newCall(request)
 	}
 
-	override fun post(url: String, customUrl: String?, body: Params, header: Params?): Call {
-		val request = createRequestWithBody(url, customUrl, body, header) { builder, body ->
+	override fun post(url: String, customUrl: String?, body: Params, headers: Params?): Call {
+		val request = createRequestWithBody(url, customUrl, body, headers) { builder, body ->
 			builder.post(body)
 		}
 		return coreClient.newCall(request)
 	}
 
-	override fun put(url: String, customUrl: String?, body: Params, header: Params?): Call {
-		val request = createRequestWithBody(url, customUrl, body, header) { builder, body ->
+	override fun put(url: String, customUrl: String?, body: Params, headers: Params?): Call {
+		val request = createRequestWithBody(url, customUrl, body, headers) { builder, body ->
 			builder.put(body)
 		}
 		return coreClient.newCall(request)
 	}
 
-	override fun delete(url: String, customUrl: String?, query: Params, header: Params?): Call {
-		val request = createRequestWithoutBody(url, customUrl, query, header) { it.delete() }
+	override fun delete(url: String, customUrl: String?, query: Params, headers: Params?): Call {
+		val request = createRequestWithoutBody(url, customUrl, query, headers) { it.delete() }
 		return coreClient.newCall(request)
 	}
 
-	override fun jsonPost(url: String, customUrl: String?, json: String, header: Params?): Call {
-		val request = createJsonRequest(url, customUrl, json, header) { builder, requestBody ->
+	override fun jsonPost(url: String, customUrl: String?, json: String, headers: Params?): Call {
+		val request = createJsonRequest(url, customUrl, json, headers) { builder, requestBody ->
 			builder.post(requestBody)
 		}
 		return coreClient.newCall(request)
 	}
 
-	override fun jsonPut(url: String, customUrl: String?, json: String, header: Params?): Call {
-		val request = createJsonRequest(url, customUrl, json, header) { builder, requestBody ->
+	override fun jsonPut(url: String, customUrl: String?, json: String, headers: Params?): Call {
+		val request = createJsonRequest(url, customUrl, json, headers) { builder, requestBody ->
 			builder.put(requestBody)
 		}
 		return coreClient.newCall(request)
