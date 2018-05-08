@@ -89,7 +89,6 @@ class DefaultRequestModelConverter(
 
 	@Throws(CountableException::class)
 	private fun processCountable(content: Content, property: KProperty1<*, Any?>): Boolean {
-		val javaField = property.javaField ?: return false
 		val countAnnotation = property.annotations.find { it is Count }
 		return if (countAnnotation != null) {
 			if (content.countable != null)

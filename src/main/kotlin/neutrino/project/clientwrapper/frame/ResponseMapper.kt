@@ -18,7 +18,7 @@ class StringResponseMapper : ResponseMapper<String> {
 	}
 }
 
-class ResponseMapperImpl : ResponseMapper<Response> {
+class EmptyResponseMapper : ResponseMapper<Response> {
 	override fun map(response: Response): Response {
 		return response
 	}

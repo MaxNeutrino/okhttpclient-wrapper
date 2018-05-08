@@ -43,7 +43,7 @@ class GetIterableMethodProcessorTest : AbstractMethodProcessorTest() {
 			url = "/main/{param}"
 			pathModel = listOf(GetTestData(0), GetTestData(1), GetTestData(2))
 
-			responseMapper = ResponseMapperImpl::class
+			responseMapper = EmptyResponseMapper::class
 		}
 
 		val expecteds = methodBuilder.build(method).block()

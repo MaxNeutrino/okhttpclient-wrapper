@@ -76,7 +76,7 @@ class MethodBuilder<T: Any>(private val client: Client, private val type: KClass
 
 	private fun getDefaultMapper(genericType: Class<out Any>): KClass<out ResponseMapper<*>>? {
 		return when {
-			Response::class.java.isAssignableFrom(genericType) -> ResponseMapperImpl::class
+			Response::class.java.isAssignableFrom(genericType) -> EmptyResponseMapper::class
 			String::class.java.isAssignableFrom(genericType) -> StringResponseMapper::class
 			Call::class.java.isAssignableFrom(genericType) -> null
 			else -> throw ResponseMapperNotFoundException()

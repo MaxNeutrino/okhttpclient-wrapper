@@ -6,6 +6,7 @@ import neutrino.project.clientwrapper.data.GetTestDataMapper
 import neutrino.project.clientwrapper.frame.Expected
 import neutrino.project.clientwrapper.frame.GetMethod
 import neutrino.project.clientwrapper.frame.MethodBuilder
+import neutrino.project.clientwrapper.frame.EmptyResponseMapper
 import neutrino.project.clientwrapper.frame.content.Countable
 import neutrino.project.clientwrapper.params
 import neutrino.project.clientwrapper.util.exception.ResponseMapperNotFoundException
@@ -223,6 +224,8 @@ class GetSingleMethodProcessorTest: AbstractMethodProcessorTest() {
 				(response!!.code() == 404 || response.code() == 500)
 						.also { response.close() } // close response for testing
 			})
+
+			responseMapper = EmptyResponseMapper::class
 		}
 
 		val okhttpClient = OkHttpClient.Builder().build()
