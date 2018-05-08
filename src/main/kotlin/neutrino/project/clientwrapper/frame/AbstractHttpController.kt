@@ -27,4 +27,25 @@ abstract class AbstractHttpController(protected val client: Client) {
 		jsonPost(method)
 		return client.send(T::class, method)
 	}
+
+	@Suppress("UNCHECKED_CAST")
+	protected inline fun <reified T : Any> put(put: PutMethod<T>.() -> Unit): Expected<T> {
+		val method = PutMethod<T>()
+		put(method)
+		return client.send(T::class, method)
+	}
+
+	@Suppress("UNCHECKED_CAST")
+	protected inline fun <reified T : Any> delete(delete: DeleteMethod<T>.() -> Unit): Expected<T> {
+		val method = DeleteMethod<T>()
+		delete(method)
+		return client.send(T::class, method)
+	}
+
+	@Suppress("UNCHECKED_CAST")
+	protected inline fun <reified T : Any> jsonPut(jsonPut: JsonPutMethod<T>.() -> Unit): Expected<T> {
+		val method = JsonPutMethod<T>()
+		jsonPut(method)
+		return client.send(T::class, method)
+	}
 }

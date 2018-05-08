@@ -37,9 +37,9 @@ open class RequestMethod<T> protected constructor() {
 	var responseMapper: KClass<out ResponseMapper<*>>? = null
 }
 
-class GetMethod<T> : RequestMethod<T>()
+open class GetMethod<T> : RequestMethod<T>()
 
-class PostMethod<T> : RequestMethod<T>() {
+open class PostMethod<T> : RequestMethod<T>() {
 	var bodyParams: Params? = null
 	var bodyMap: Map<String, String>? = null
 	var bodyModel: Any? = null
@@ -47,8 +47,14 @@ class PostMethod<T> : RequestMethod<T>() {
 	var bodyModelConverter: KClass<out RequestModelConverter>? = null
 }
 
-class JsonPostMethod<T> : RequestMethod<T>() {
+class PutMethod<T>: PostMethod<T>()
+
+class DeleteMethod<T>: GetMethod<T>()
+
+open class JsonPostMethod<T> : RequestMethod<T>() {
 	var json: String? = null
 	var jsonModel: Any? = null
 	var jsonConverter: KClass<out RequestJsonConverter>? = null
 }
+
+class JsonPutMethod<T>: JsonPostMethod<T>()

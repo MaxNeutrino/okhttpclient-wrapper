@@ -34,22 +34,27 @@ interface Client {
 
 	fun getClientCookieHandler(): ClientCookieHandler?
 
-	fun get(url: String = "", customUrl: String? = null, body: Params? = null,
-			header: Params? = null): Call?
+	fun get(url: String = "", customUrl: String? = null, query: Params? = null,
+			header: Params? = null): Call
 
 	fun post(url: String = "", customUrl: String? = null, body: Params,
-			 header: Params? = null): Call?
+			 header: Params? = null): Call
 
-	fun sendFile(url: String = "",
-				 customUrl: String? = null,
-				 body: Map<String, String>? = null,
-				 header: Map<String, String>? = null,
-				 name: String = "",
-				 file: File): Call?
+	fun put(url: String = "", customUrl: String? = null, body: Params,
+			header: Params? = null): Call
 
-	fun send(request: Request): Call?
+	fun delete(url: String = "", customUrl: String? = null, query: Params,
+			   header: Params? = null): Call
 
-	fun processAndSend(request: Request.Builder): Call?
+	fun jsonPost(url: String = "", customUrl: String? = null, json: String,
+				 header: Params? = null): Call
+
+	fun jsonPut(url: String = "", customUrl: String? = null, json: String,
+				header: Params? = null): Call
+
+	fun send(request: Request): Call
+
+	fun processAndSend(request: Request.Builder): Call
 
 	fun <T: Any> send(expectedClass: KClass<T>, request: RequestMethod<T>): Expected<T>
 
@@ -60,6 +65,10 @@ interface Client {
 	fun getUserAgent(): String?
 
 	fun getStorageProvider(): StorageProvider
+
+	fun makeGlobal() {
+		Global.client = this
+	}
 
 	companion object {
 		const val defaultUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36"

@@ -24,11 +24,13 @@ class OkHttpClientWrapper(private var baseUrl: String,
 
 	private var cookieHandler: ClientCookieHandler? = null
 
+	private val jsonMediaType = MediaType.parse("application/json; charset=utf-8")
+
 	private var userAgent = ""
 
 	init {
 
-		if(cookieManager != null) {
+		if (cookieManager != null) {
 			if (cookieHandler == null)
 				cookieHandler = DefaultClientCookieHandler(this, cookieManager, storageProvider, cookiesFileName)
 
@@ -56,94 +58,50 @@ class OkHttpClientWrapper(private var baseUrl: String,
 		return cookieHandler
 	}
 
-	override fun get(url: String, customUrl: String?, body: Params?, header: Params?): Call? {
-		var request = Request.Builder()
-				.url(customUrl ?: "$baseUrl$url")
-				.get()
+	override fun get(url: String, customUrl: String?, query: Params?, header: Params?): Call {
+		val request = createRequestWithoutBody(url, customUrl, query, header) { it.get() }
 
-		header?.getParams()?.forEach { request.addHeader(it.first, it.second) }
-
-		if(userAgent.isNotEmpty()) {
-			request.addHeader("User-Agent", userAgent)
-		}
-
-		processorStore.getRequestProcessors()
-				.forEach {
-					request = it.process(this, request)
-				}
-
-		return coreClient.newCall(request.build())
-	}
-
-	override fun post(url: String, customUrl: String?, body: Params, header: Params?): Call? {
-		var request = Request.Builder()
-				.url(customUrl ?: "$baseUrl$url")
-
-		header?.getParams()?.forEach { request.addHeader(it.first, it.second) }
-
-		if(userAgent.isNotEmpty()) {
-			request.addHeader("User-Agent", userAgent)
-		}
-
-		val formBody = FormBody.Builder()
-
-		body.getParams().forEach{
-			formBody.add(it.first, it.second)
-		}
-
-		request.post(formBody.build())
-
-		processorStore.getRequestProcessors()
-				.forEach {
-					request = it.process(this, request)
-				}
-
-
-		return coreClient.newCall(request.build())
-	}
-
-	override fun sendFile(url: String, customUrl: String?, body: Map<String, String>?, header: Map<String, String>?,
-						  name: String, file: File): Call? {
-
-		var request = Request.Builder()
-				.url(customUrl ?: "$baseUrl$url")
-
-		header?.forEach { t, u -> request.addHeader(t, u) }
-
-		if(userAgent.isNotEmpty()) {
-			request.addHeader("User-Agent", userAgent)
-		}
-
-		val multipartBody = MultipartBody.Builder()
-				.setType(MultipartBody.FORM)
-				.addFormDataPart(name, file.name,
-						RequestBody.create(MediaType.parse("multipart/form-data"), file))
-
-		if(body != null) {
-			val formBody = FormBody.Builder()
-
-			body.forEach{
-				formBody.add(it.key, it.value)
-			}
-
-			multipartBody.addPart(formBody.build())
-		}
-
-		request.post(multipartBody.build())
-
-		processorStore.getRequestProcessors()
-				.forEach {
-					request = it.process(this, request)
-				}
-
-		return coreClient.newCall(request.build())
-	}
-
-	override fun send(request: Request): Call? {
 		return coreClient.newCall(request)
 	}
 
-	override fun processAndSend(request: Request.Builder): Call? {
+	override fun post(url: String, customUrl: String?, body: Params, header: Params?): Call {
+		val request = createRequestWithBody(url, customUrl, body, header) { builder, body ->
+			builder.post(body)
+		}
+		return coreClient.newCall(request)
+	}
+
+	override fun put(url: String, customUrl: String?, body: Params, header: Params?): Call {
+		val request = createRequestWithBody(url, customUrl, body, header) { builder, body ->
+			builder.put(body)
+		}
+		return coreClient.newCall(request)
+	}
+
+	override fun delete(url: String, customUrl: String?, query: Params, header: Params?): Call {
+		val request = createRequestWithoutBody(url, customUrl, query, header) { it.delete() }
+		return coreClient.newCall(request)
+	}
+
+	override fun jsonPost(url: String, customUrl: String?, json: String, header: Params?): Call {
+		val request = createJsonRequest(url, customUrl, json, header) { builder, requestBody ->
+			builder.post(requestBody)
+		}
+		return coreClient.newCall(request)
+	}
+
+	override fun jsonPut(url: String, customUrl: String?, json: String, header: Params?): Call {
+		val request = createJsonRequest(url, customUrl, json, header) { builder, requestBody ->
+			builder.put(requestBody)
+		}
+		return coreClient.newCall(request)
+	}
+
+	override fun send(request: Request): Call {
+		return coreClient.newCall(request)
+	}
+
+	override fun processAndSend(request: Request.Builder): Call {
 		var builder = request
 		processorStore.getRequestProcessors()
 				.forEach {
@@ -169,5 +127,95 @@ class OkHttpClientWrapper(private var baseUrl: String,
 
 	override fun getStorageProvider(): StorageProvider {
 		return storageProvider
+	}
+
+	private fun createRequestWithoutBody(url: String,
+										 customUrl: String?,
+										 query: Params?,
+										 header: Params?,
+										 methodInvoker: (Request.Builder) -> Unit): Request {
+
+		val query = query?.joinToString("&") { "${it.first}=${it.second}" }
+
+		val url = if (query != null) {
+			val base = customUrl ?: "$baseUrl$url"
+			"$base?$query"
+		} else {
+			customUrl ?: "$baseUrl$url"
+		}
+
+		var request = Request.Builder()
+				.url(url)
+
+		methodInvoker(request)
+
+		header?.getParams()?.forEach { request.addHeader(it.first, it.second) }
+
+		if (userAgent.isNotEmpty()) {
+			request.addHeader("User-Agent", userAgent)
+		}
+
+		processorStore.getRequestProcessors()
+				.forEach {
+					request = it.process(this, request)
+				}
+
+		return request.build()
+	}
+
+	private fun createRequestWithBody(url: String,
+									  customUrl: String?,
+									  body: Params,
+									  header: Params?,
+									  methodInvoker: (Request.Builder, FormBody) -> Unit): Request {
+
+		var request = Request.Builder()
+				.url(customUrl ?: "$baseUrl$url")
+
+		header?.getParams()?.forEach { request.addHeader(it.first, it.second) }
+
+		if (userAgent.isNotEmpty()) {
+			request.addHeader("User-Agent", userAgent)
+		}
+
+		val formBody = FormBody.Builder()
+
+		body.getParams().forEach {
+			formBody.add(it.first, it.second)
+		}
+
+		methodInvoker(request, formBody.build())
+
+		processorStore.getRequestProcessors()
+				.forEach {
+					request = it.process(this, request)
+				}
+
+		return request.build()
+	}
+
+	private fun createJsonRequest(url: String,
+							customUrl: String?,
+							json: String,
+							header: Params?,
+							methodInvoker: (Request.Builder, RequestBody) -> Unit): Request {
+		var request = Request.Builder()
+				.url(customUrl ?: "$baseUrl$url")
+
+		header?.getParams()?.forEach { request.addHeader(it.first, it.second) }
+
+		if (userAgent.isNotEmpty()) {
+			request.addHeader("User-Agent", userAgent)
+		}
+
+		processorStore.getRequestProcessors()
+				.forEach {
+					request = it.process(this, request)
+				}
+
+		val requestBody = RequestBody.create(jsonMediaType, json)
+
+		methodInvoker(request, requestBody)
+		return request.build()
 	}
 }

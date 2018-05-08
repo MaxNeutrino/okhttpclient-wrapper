@@ -21,9 +21,17 @@ data class RequestMethodModel(
 		else
 			requestBuilder.url(customUrl)
 
-		if (RequestMethodName.POST == requestMethod) {
-			requestBody ?: throw RequestMethodException("Can't send post without body")
-			requestBuilder.post(requestBody)
+		when(requestMethod) {
+			RequestMethodName.GET -> requestBuilder.get()
+			RequestMethodName.POST -> {
+				requestBody ?: throw RequestMethodException("Can't send post without body")
+				requestBuilder.post(requestBody)
+			}
+			RequestMethodName.PUT -> {
+				requestBody ?: throw RequestMethodException("Can't send put without body")
+				requestBuilder.put(requestBody)
+			}
+			RequestMethodName.DELETE -> requestBuilder.delete()
 		}
 
 		return requestBuilder
@@ -34,6 +42,9 @@ data class RequestMethodModel(
 			is GetMethod -> RequestMethodName.GET
 			is PostMethod -> RequestMethodName.POST
 			is JsonPostMethod -> RequestMethodName.POST
+			is PutMethod -> RequestMethodName.PUT
+			is JsonPutMethod -> RequestMethodName.PUT
+			is DeleteMethod -> RequestMethodName.DELETE
 			else -> throw IllegalStateException()
 		}
 	}
@@ -57,5 +68,5 @@ data class RequestMethodModel(
 }
 
 enum class RequestMethodName {
-	GET, POST
+	GET, POST, PUT, DELETE
 }
