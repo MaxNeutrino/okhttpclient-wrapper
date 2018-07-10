@@ -1,6 +1,15 @@
 package neutrino.project.clientwrapper
 
-
+/**
+ * Replace okhttp3.FormBody
+ *
+ * Use
+ * 		Params.if(key1 to val1, key2 to val2)
+ * 		Params.from(mapOf(key1 to val1, key2 to val2))
+ * 		params(key1 to val1, key2 to val2)
+ *
+ * @see okhttp3.FormBody
+ */
 class Params private constructor(
 		private var params: MutableList<Pair<String, String>>) : MutableCollection<Pair<String, String>> {
 

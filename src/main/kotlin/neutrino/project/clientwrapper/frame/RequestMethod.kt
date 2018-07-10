@@ -6,7 +6,9 @@ import neutrino.project.clientwrapper.frame.converter.RequestJsonConverter
 import neutrino.project.clientwrapper.frame.converter.RequestModelConverter
 import kotlin.reflect.KClass
 
-
+/**
+ * Used for HttpController
+ */
 open class RequestMethod<T> protected constructor() {
 	var url: String? = null
 	var customUrl: String? = null
